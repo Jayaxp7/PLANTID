@@ -1028,7 +1028,7 @@
 
 <script>
     /* ─── CONFIG ─── */
-    const API_KEY = 'AIzaSyDj0tm6swRQ4ucPDMiUYW3ZQKv0ndtjlw4';
+    // API_KEY gerenciada pelo servidor Vercel (variável de ambiente)
     let db;
     let currentImgBase64 = "";
 
@@ -1134,7 +1134,7 @@
 
             // Etapa 1: identificar só o binômio (Gênero epíteto) sem inventar autor
             const imgBase64Data = currentImgBase64.split(',')[1];
-            const check = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+            const check = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1239,7 +1239,7 @@ uso_economico: valor de mercado, aplicações industriais, culinárias, madeirei
 toxicidade: nível de toxicidade (para humanos, pets, gado), partes tóxicas e princípio ativo
 conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
-            const full = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+            const full = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

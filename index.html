@@ -629,39 +629,46 @@
         /* ── MODAL ACTIONS ── */
         .modal-actions {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-top: 28px;
         }
 
         .btn-close-modal {
-            flex: 1;
-            padding: 14px;
+            flex: 1 1 80px;
+            padding: 12px 8px;
             border-radius: 12px;
             border: 1.5px solid var(--kraft-dark);
             background: white;
             color: var(--text-mid);
             font-family: 'DM Sans', sans-serif;
             font-weight: 600;
-            font-size: 0.78rem;
-            letter-spacing: 1.5px;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
+            text-align: center;
         }
 
         .btn-close-modal:hover { background: var(--kraft-dark); }
 
         .btn-share {
+            flex: 1 1 80px;
             background: #1b5e20;
             color: #fff;
             border: none;
             border-radius: 12px;
-            padding: 12px 20px;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1rem;
+            padding: 12px 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.72rem;
             font-weight: 600;
             cursor: pointer;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-align: center;
             transition: background 0.2s;
         }
         .btn-share:hover { background: #2e7d32; }

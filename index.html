@@ -651,6 +651,21 @@
 
         .btn-close-modal:hover { background: var(--kraft-dark); }
 
+        .btn-share {
+            background: #1b5e20;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+        .btn-share:hover { background: #2e7d32; }
+
         .btn-delete {
             padding: 14px 20px;
             border-radius: 12px;
@@ -1502,6 +1517,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
             <div class="modal-actions">
                 <button class="btn-close-modal" onclick="closeModal()">Fechar</button>
+                <button class="btn-share" onclick="compartilharPlanta()">↗ Compartilhar</button>
                 <button class="btn-delete" onclick="deletePlant(${p.id})">🗑 Remover</button>
             </div>
         `;
@@ -1511,6 +1527,107 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     function closeModal() {
         document.getElementById('detailModal').style.display = 'none';
+    }
+
+    /* ── COMPARTILHAR IDENTIFICAÇÃO ── */
+    function compartilharPlanta() {
+        const img = document.getElementById('m-img');
+        const nomePopular = document.querySelector('.modal-plant-name')?.innerText || 'Planta Identificada';
+        const nomeCientifico = document.querySelector('.modal-plant-sci')?.innerText || '';
+
+        // Cria canvas com a foto + overlay de texto
+        const canvas = document.createElement('canvas');
+        const SIZE = 1080;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            // Foto como fundo quadrado (crop centralizado)
+            const ratio = image.width / image.height;
+            let sx = 0, sy = 0, sw = image.width, sh = image.height;
+            if (ratio > 1) { sw = image.height; sx = (image.width - sw) / 2; }
+            else { sh = image.width; sy = (image.height - sh) / 2; }
+            ctx.drawImage(image, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
+
+            // Gradiente inferior
+            const grad = ctx.createLinearGradient(0, SIZE * 0.45, 0, SIZE);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.82)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, SIZE, SIZE);
+
+            // Nome popular — grande, canto inferior esquerdo
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold 72px 'Arial'`;
+            ctx.textBaseline = 'bottom';
+            ctx.textAlign = 'left';
+            const maxWidth = SIZE - 80;
+            // Quebra texto longo
+            const palavras = nomePopular.split(',')[0].trim().split(' ');
+            let linhas = [], linha = '';
+            for (const p of palavras) {
+                const teste = linha ? linha + ' ' + p : p;
+                if (ctx.measureText(teste).width > maxWidth) { linhas.push(linha); linha = p; }
+                else linha = teste;
+            }
+            linhas.push(linha);
+            const linhaHeight = 80;
+            const totalLinhas = linhas.length;
+
+            // Nome científico — menor, itálico
+            ctx.font = `italic 36px Arial`;
+            const sciWidth = ctx.measureText(nomeCientifico).width;
+
+            // Posições
+            const paddingBottom = 60;
+            const sciY = SIZE - paddingBottom;
+            const popY = sciY - 20 - (linhaHeight * totalLinhas);
+
+            // Sombra suave no texto
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 12;
+
+            // Desenha nome científico
+            ctx.font = `italic 38px Arial`;
+            ctx.fillStyle = 'rgba(255,255,255,0.80)';
+            ctx.fillText(nomeCientifico, 48, sciY);
+
+            // Desenha nome popular
+            ctx.font = `bold 68px Arial`;
+            ctx.fillStyle = '#ffffff';
+            linhas.forEach((l, i) => {
+                ctx.fillText(l, 48, popY + (i * linhaHeight));
+            });
+
+            // Logo PlantID discreto — canto superior direito
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 28px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.55)';
+            ctx.textAlign = 'right';
+            ctx.fillText('🌿 plantid.com.br', SIZE - 36, 56);
+
+            // Exporta e compartilha
+            canvas.toBlob(blob => {
+                const file = new File([blob], 'plantid_identificacao.jpg', { type: 'image/jpeg' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: nomePopular,
+                        text: `${nomePopular}\n${nomeCientifico}\n\nIdentificado com PlantID 🌿\nplantid.com.br`
+                    }).catch(() => {});
+                } else {
+                    // Fallback: download direto
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/jpeg', 0.92);
+                    a.download = `plantid_${nomePopular.replace(/\s/g,'_')}.jpg`;
+                    a.click();
+                }
+            }, 'image/jpeg', 0.92);
+        };
+        image.src = img.src;
     }
 
     function deletePlant(id) {

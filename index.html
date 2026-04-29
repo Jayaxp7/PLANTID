@@ -382,6 +382,48 @@
             min-height: 20px;
         }
 
+        /* ── TOAST DE ERRO ── */
+        #plantid-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 24px;
+            max-width: 360px;
+            width: calc(100% - 48px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events: none;
+            border-left: 5px solid #c62828;
+        }
+        #plantid-toast.toast-show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        #plantid-toast.toast-warn { border-left-color: #e65100; }
+        #plantid-toast.toast-info { border-left-color: #1b5e20; }
+        .toast-icon { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+        .toast-title { font-weight: 700; font-size: 0.95rem; color: #1a1a1a; margin-bottom: 4px; }
+        .toast-msg { font-size: 0.82rem; color: #555; line-height: 1.5; }
+        .toast-countdown { font-size: 0.78rem; color: #888; margin-top: 8px; }
+        .toast-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 18px;
+            background: #1b5e20;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* ── HERB GRID ── */
         .section-title {
             font-family: 'Cormorant Garamond', serif;
@@ -1176,8 +1218,11 @@
             const rawName = checkData.candidates[0].content.parts[0].text.trim();
 
             if (rawName.toUpperCase().includes("INDEFINIDO") || rawName.split(' ').length < 2) {
-                status.innerText = "⚠️ Não foi possível identificar a espécie na imagem.";
-                setTimeout(() => { status.innerText = ""; btn.disabled = false; }, 3000);
+                btn.disabled = false;
+                status.innerText = "";
+                showToast('info', '🔍', 'Planta não identificada',
+                    'Não foi possível identificar a espécie nessa imagem. Tente uma foto mais próxima, com boa iluminação e foco nas folhas ou flores.',
+                    { duracao: 7000 });
                 return;
             }
 
@@ -1320,8 +1365,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             };
 
         } catch (e) {
-            status.innerText = "";
-            alert("Erro: " + e.message);
+            tratarErro(e.message, btn);
         } finally {
             btn.disabled = false;
         }
@@ -1739,6 +1783,116 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     }
 
 
+    /* ── SISTEMA DE TOAST DE ERROS ── */
+    let _toastTimer = null;
+    let _countdownTimer = null;
+
+    function showToast(tipo, icone, titulo, mensagem, opcoes = {}) {
+        const toast = document.getElementById('plantid-toast');
+        const iconEl = document.getElementById('toast-icon');
+        const titleEl = document.getElementById('toast-title');
+        const msgEl = document.getElementById('toast-msg');
+        const countEl = document.getElementById('toast-countdown');
+
+        // Limpa timers anteriores
+        clearTimeout(_toastTimer);
+        clearInterval(_countdownTimer);
+
+        // Remove botão antigo se houver
+        const oldBtn = toast.querySelector('.toast-btn');
+        if (oldBtn) oldBtn.remove();
+
+        // Define tipo visual
+        toast.className = '';
+        if (tipo === 'warn') toast.classList.add('toast-warn');
+        else if (tipo === 'info') toast.classList.add('toast-info');
+
+        iconEl.textContent = icone;
+        titleEl.textContent = titulo;
+        msgEl.textContent = mensagem;
+        countEl.textContent = '';
+
+        // Countdown para High Demand
+        if (opcoes.countdown) {
+            let seg = opcoes.countdown;
+            countEl.textContent = `Tente novamente em ${seg}s`;
+            _countdownTimer = setInterval(() => {
+                seg--;
+                if (seg <= 0) {
+                    clearInterval(_countdownTimer);
+                    countEl.textContent = 'Você já pode tentar novamente!';
+                    // Reabilita o botão de análise
+                    document.getElementById('runBtn').disabled = false;
+                } else {
+                    countEl.textContent = `Tente novamente em ${seg}s`;
+                }
+            }, 1000);
+        }
+
+        // Botão fechar
+        if (opcoes.fechar !== false) {
+            const btn = document.createElement('button');
+            btn.className = 'toast-btn';
+            btn.textContent = 'Entendi';
+            btn.onclick = () => hideToast();
+            toast.appendChild(btn);
+        }
+
+        // Mostra o toast
+        toast.classList.add('toast-show');
+
+        // Auto-esconde (exceto se tiver countdown)
+        if (!opcoes.countdown) {
+            _toastTimer = setTimeout(() => hideToast(), opcoes.duracao || 5000);
+        }
+    }
+
+    function hideToast() {
+        const toast = document.getElementById('plantid-toast');
+        toast.classList.remove('toast-show');
+        clearTimeout(_toastTimer);
+        clearInterval(_countdownTimer);
+    }
+
+    function tratarErro(mensagemErro, btn) {
+        btn.disabled = false;
+        document.getElementById('status-ia').innerText = '';
+
+        const msg = mensagemErro || '';
+
+        if (msg.includes('high demand') || msg.includes('High demand') || msg.includes('overloaded') || msg.includes('503')) {
+            btn.disabled = true; // mantém desabilitado durante countdown
+            showToast('warn', '🌿', 'Servidor sobrecarregado',
+                'O Gemini está com alta demanda no momento. Aguarde alguns segundos antes de tentar novamente.',
+                { countdown: 10 });
+
+        } else if (msg.includes('API key') || msg.includes('API Key') || msg.includes('key not found') || msg.includes('key expired') || msg.includes('leaked')) {
+            showToast('', '🔑', 'Problema com a chave de acesso',
+                'Ocorreu um problema de autenticação com o servidor. Tente novamente em instantes.',
+                { duracao: 7000 });
+
+        } else if (msg.includes('INDEFINIDO') || msg.includes('não foi possível') || msg.includes('not found')) {
+            showToast('info', '🔍', 'Planta não identificada',
+                'Não foi possível identificar a espécie nessa imagem. Tente uma foto mais próxima, com boa iluminação e foco nas folhas ou flores.',
+                { duracao: 7000 });
+
+        } else if (msg.includes('JSON') || msg.includes('parse')) {
+            showToast('', '📋', 'Erro no relatório',
+                'O relatório não foi gerado corretamente. Tente novamente — geralmente funciona na segunda tentativa.',
+                { duracao: 6000 });
+
+        } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+            showToast('', '📡', 'Sem conexão',
+                'Verifique sua conexão com a internet e tente novamente.',
+                { duracao: 6000 });
+
+        } else {
+            showToast('', '⚠️', 'Algo deu errado',
+                'Ocorreu um erro inesperado. Tente novamente em alguns instantes.',
+                { duracao: 6000 });
+        }
+    }
+
     /* ── FLOATING LEAVES ENGINE ── */
     (function() {
         const wrap = document.getElementById('floating-leaves-wrap');
@@ -1891,5 +2045,13 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     })();
 </script>
+    <!-- TOAST DE ERRO -->
+    <div id="plantid-toast">
+        <span class="toast-icon" id="toast-icon">⚠️</span>
+        <div class="toast-title" id="toast-title">Erro</div>
+        <div class="toast-msg" id="toast-msg"></div>
+        <div class="toast-countdown" id="toast-countdown"></div>
+    </div>
+
 </body>
 </html>

@@ -1365,9 +1365,11 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             };
 
         } catch (e) {
+            console.error('PlantID erro:', e.message);
             tratarErro(e.message, btn);
         } finally {
-            btn.disabled = false;
+            // Só reabilita se não houver countdown ativo (high demand)
+            if (!window._countdownAtivo) btn.disabled = false;
         }
     };
 
@@ -1820,8 +1822,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 seg--;
                 if (seg <= 0) {
                     clearInterval(_countdownTimer);
+                    window._countdownAtivo = false;
                     countEl.textContent = 'Você já pode tentar novamente!';
-                    // Reabilita o botão de análise
                     document.getElementById('runBtn').disabled = false;
                 } else {
                     countEl.textContent = `Tente novamente em ${seg}s`;
@@ -1860,8 +1862,9 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
         const msg = mensagemErro || '';
 
-        if (msg.includes('high demand') || msg.includes('High demand') || msg.includes('overloaded') || msg.includes('503')) {
-            btn.disabled = true; // mantém desabilitado durante countdown
+        if (msg.includes('high demand') || msg.includes('High demand') || msg.includes('overloaded') || msg.includes('503') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
+            btn.disabled = true;
+            window._countdownAtivo = true;
             showToast('warn', '🌿', 'Servidor sobrecarregado',
                 'O Gemini está com alta demanda no momento. Aguarde alguns segundos antes de tentar novamente.',
                 { countdown: 10 });
@@ -1888,8 +1891,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
         } else {
             showToast('', '⚠️', 'Algo deu errado',
-                `Erro: ${mensagemErro}`,
-                { duracao: 8000 });
+                'Ocorreu um erro inesperado. Tente novamente em alguns instantes.',
+                { duracao: 6000 });
         }
     }
 

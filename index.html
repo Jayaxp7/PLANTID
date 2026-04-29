@@ -1306,22 +1306,32 @@ uso_economico: valor de mercado, aplicações industriais, culinárias, madeirei
 toxicidade: nível de toxicidade (para humanos, pets, gado), partes tóxicas e princípio ativo
 conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
-            const full = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [
-                        { text: systemPrompt + "\n\n" + userPrompt },
-                        { inline_data: { mime_type: "image/jpeg", data: imgBase64Data } }
-                    ]}]
-                })
-            });
-
-            const fullData = await full.json();
-
-            if (!fullData.candidates || !fullData.candidates[0]) {
-                const errDetail = fullData.error ? fullData.error.message : JSON.stringify(fullData).slice(0, 300);
-                throw new Error("Etapa 2 — " + errDetail);
+            // Etapa 2 com retry automático (até 3 tentativas)
+            let fullData = null;
+            const maxTentativas = 3;
+            for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+                if (tentativa > 1) {
+                    status.innerText = `⏳ Servidor ocupado, tentando novamente (${tentativa}/${maxTentativas})...`;
+                    await new Promise(r => setTimeout(r, 5000));
+                }
+                const full = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: systemPrompt + "\n\n" + userPrompt },
+                            { inline_data: { mime_type: "image/jpeg", data: imgBase64Data } }
+                        ]}]
+                    })
+                });
+                fullData = await full.json();
+                if (fullData.candidates && fullData.candidates[0]) break;
+                const errMsg = fullData.error?.message || '';
+                const isHighDemand = errMsg.includes('high demand') || errMsg.includes('overloaded') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('429') || full.status === 503;
+                if (!isHighDemand || tentativa === maxTentativas) {
+                    const errDetail = fullData.error ? fullData.error.message : JSON.stringify(fullData).slice(0, 300);
+                    throw new Error("Etapa 2 — " + errDetail);
+                }
             }
 
             // Parse robusto: remove possíveis blocos markdown antes de parsear

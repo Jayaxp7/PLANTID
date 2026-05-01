@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
+            --transition-theme: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
             --primary: #1b5e20;
             --primary-light: #2e7d32;
             --accent: #4caf50;
@@ -149,6 +150,166 @@
             pointer-events: none;
             z-index: 0;
         }
+
+        /* ── DARK MODE ── */
+        body.dark-mode {
+            --primary: #81c784;
+            --primary-dark: #4caf50;
+            --bg: #121212;
+            --bg-card: #1e1e1e;
+            --text-mid: #e0e0e0;
+            --text-soft: #9e9e9e;
+            --kraft: #1e1e1e;
+            --kraft-dark: #333333;
+            background: #121212;
+            color: #e0e0e0;
+        }
+        body.dark-mode nav {
+            background: #1b5e20;
+        }
+        body.dark-mode .modal-card,
+        body.dark-mode .upload-card,
+        body.dark-mode .herb-card {
+            background: #1e1e1e;
+            border-color: #333;
+        }
+        body.dark-mode .info-row {
+            border-bottom-color: #333;
+        }
+        body.dark-mode .info-value {
+            color: #e0e0e0;
+        }
+        body.dark-mode .herb-search {
+            background: #1e1e1e;
+            border-color: #333;
+            color: #e0e0e0;
+        }
+        body.dark-mode .herb-search::placeholder { color: #666; }
+        body.dark-mode .modal-header { background: #1b5e20; }
+        body.dark-mode .btn-close-modal {
+            background: #1e1e1e;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+        body.dark-mode .info-section {
+            background: #242424;
+            border-color: #333;
+        }
+        body.dark-mode .info-section-header { border-bottom-color: #333; }
+        body.dark-mode #page-termos > div > div {
+            background: #1e1e1e;
+            border-color: #333;
+        }
+        body.dark-mode .upload-zone {
+            background: #1e1e1e;
+            border-color: #2e7d32;
+        }
+        body.dark-mode .scan-btn { background: #2e7d32; }
+        body.dark-mode .hero-title { color: #81c784; }
+        body.dark-mode .section-title { color: #81c784; }
+        body.dark-mode .section-sub { color: #666; }
+        body.dark-mode #leaves-overlay svg path,
+        body.dark-mode #leaves-overlay svg line,
+        body.dark-mode #leaves-overlay svg ellipse,
+        body.dark-mode #leaves-overlay svg circle { fill: #81c784; stroke: #81c784; }
+        body.dark-mode .herb-noresult { color: #666; }
+
+        /* ── PAINEL DE CONFIGURAÇÕES ── */
+        #config-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, background 0.3s;
+        }
+        #config-btn:hover { transform: rotate(45deg); }
+        #config-btn.open { transform: rotate(90deg); }
+
+        #config-panel {
+            position: fixed;
+            bottom: 82px;
+            right: 20px;
+            background: #fff;
+            border-radius: 18px;
+            padding: 20px;
+            width: 240px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            z-index: 799;
+            opacity: 0;
+            transform: translateY(12px) scale(0.97);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        #config-panel.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        body.dark-mode #config-panel {
+            background: #1e1e1e;
+            border: 1px solid #333;
+        }
+        body.dark-mode #config-btn { background: #2e7d32; }
+        .config-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+        .config-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        body.dark-mode .config-row { border-bottom-color: #333; }
+        .config-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .config-label {
+            font-size: 0.88rem;
+            color: var(--text-mid);
+            font-weight: 500;
+        }
+        body.dark-mode .config-label { color: #e0e0e0; }
+        .toggle-wrap {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.25s;
+        }
+        .toggle-slider:before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            top: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.25s;
+        }
+        .toggle-wrap input:checked + .toggle-slider { background: var(--primary); }
+        .toggle-wrap input:checked + .toggle-slider:before { transform: translateX(20px); }
 
         /* ── NAV ── */
         nav {
@@ -2031,6 +2192,50 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     }
 
+    /* ── CONFIGURAÇÕES & DARK MODE ── */
+    function toggleConfigPanel() {
+        const btn = document.getElementById('config-btn');
+        const panel = document.getElementById('config-panel');
+        const isOpen = panel.classList.contains('open');
+        // Sincroniza toggle com estado atual
+        const toggle = document.getElementById('toggle-dark');
+        if (toggle) toggle.checked = document.body.classList.contains('dark-mode');
+        btn.classList.toggle('open', !isOpen);
+        panel.classList.toggle('open', !isOpen);
+        // Fechar ao clicar fora
+        if (!isOpen) {
+            setTimeout(() => {
+                document.addEventListener('click', fecharPainelFora, { once: true });
+            }, 10);
+        }
+    }
+
+    function fecharPainelFora(e) {
+        const panel = document.getElementById('config-panel');
+        const btn = document.getElementById('config-btn');
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.classList.remove('open');
+            btn.classList.remove('open');
+        }
+    }
+
+    function toggleDarkMode(ativo) {
+        document.body.classList.toggle('dark-mode', ativo);
+        localStorage.setItem('plantid_darkmode', ativo ? '1' : '0');
+    }
+
+    // Aplicar preferência salva ao carregar
+    (function() {
+        const dark = localStorage.getItem('plantid_darkmode') === '1';
+        if (dark) {
+            document.body.classList.add('dark-mode');
+            document.addEventListener('DOMContentLoaded', () => {
+                const toggle = document.getElementById('toggle-dark');
+                if (toggle) toggle.checked = true;
+            });
+        }
+    })();
+
     /* ── FLOATING LEAVES ENGINE ── */
     (function() {
         const wrap = document.getElementById('floating-leaves-wrap');
@@ -2183,6 +2388,21 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     })();
 </script>
+    <!-- BOTÃO DE CONFIGURAÇÕES -->
+    <button id="config-btn" onclick="toggleConfigPanel()" title="Configurações">⚙️</button>
+
+    <!-- PAINEL DE CONFIGURAÇÕES -->
+    <div id="config-panel">
+        <div class="config-title">⚙️ Configurações</div>
+        <div class="config-row">
+            <span class="config-label">🌙 Modo Escuro</span>
+            <label class="toggle-wrap">
+                <input type="checkbox" id="toggle-dark" onchange="toggleDarkMode(this.checked)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
     <!-- TOAST DE ERRO -->
     <div id="plantid-toast">
         <span class="toast-icon" id="toast-icon">⚠️</span>

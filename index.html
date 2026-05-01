@@ -912,6 +912,39 @@
             margin-top: 2px;
         }
 
+        .herb-feedback-bar {
+            display: flex;
+            gap: 6px;
+            padding: 10px 12px;
+            background: #f1f8e9;
+            border-top: 1px solid #c8e6c9;
+        }
+        body.dark-mode .herb-feedback-bar {
+            background: #1a2e1a;
+            border-top-color: #2e3a2e;
+        }
+        .herb-feedback-label {
+            font-size: 0.72rem;
+            color: var(--soft);
+            flex: 1;
+            align-self: center;
+            font-weight: 500;
+        }
+        body.dark-mode .herb-feedback-label { color: #a5c8a7; }
+        .herb-fb-btn {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .herb-fb-btn:hover { opacity: 0.85; }
+        .herb-fb-sim { background: #2e7d32; color: #fff; }
+        .herb-fb-nao { background: #fff; color: #c62828; border: 1.5px solid #ef9a9a; }
+        body.dark-mode .herb-fb-nao { background: #2a1a1a; border-color: #c62828; }
+
         .herb-badge {
             position: absolute;
             top: 12px;
@@ -1877,17 +1910,79 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         plantas.forEach(p => {
             const div = document.createElement('div');
             div.className = 'herb-card';
-            div.onclick = () => openModal(p);
-            div.innerHTML = `
-                <img src="${p.img}" alt="${p.nome_popular}">
-                <div class="herb-label">
-                    <span class="herb-label-name">${p.nome_popular || 'Espécie'}</span>
-                    <span class="herb-label-sci">${formatarNomeCientifico(p.nome_cientifico)}</span>
-                </div>
-                <div class="herb-badge">ID</div>
+            div._plantData = p;
+
+            const semFeedback = p._confirmada === undefined || p._confirmada === null;
+
+            // Imagem e label abrem o modal
+            const imgEl = document.createElement('img');
+            imgEl.src = p.img;
+            imgEl.alt = p.nome_popular || '';
+            imgEl.onclick = () => openModal(p);
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'herb-label';
+            labelEl.onclick = () => openModal(p);
+            labelEl.innerHTML = `
+                <span class="herb-label-name">${p.nome_popular || 'Espécie'}</span>
+                <span class="herb-label-sci">${formatarNomeCientifico(p.nome_cientifico)}</span>
             `;
+
+            const badgeEl = document.createElement('div');
+            badgeEl.className = 'herb-badge';
+            badgeEl.textContent = 'ID';
+
+            div.appendChild(imgEl);
+            div.appendChild(labelEl);
+            div.appendChild(badgeEl);
+
+            // Barra de feedback só para plantas sem confirmação
+            if (semFeedback) {
+                const bar = document.createElement('div');
+                bar.className = 'herb-feedback-bar';
+                bar.id = 'fb-bar-' + p.id;
+                bar.innerHTML = `<span class="herb-feedback-label">Identificação correta?</span>`;
+
+                const btnSim = document.createElement('button');
+                btnSim.className = 'herb-fb-btn herb-fb-sim';
+                btnSim.textContent = '✅ Sim';
+                btnSim.onclick = (e) => { e.stopPropagation(); feedbackHerb(p, true); };
+
+                const btnNao = document.createElement('button');
+                btnNao.className = 'herb-fb-btn herb-fb-nao';
+                btnNao.textContent = '❌ Não';
+                btnNao.onclick = (e) => { e.stopPropagation(); feedbackHerb(p, false); };
+
+                bar.appendChild(btnSim);
+                bar.appendChild(btnNao);
+                div.appendChild(bar);
+            }
+
             list.appendChild(div);
         });
+    }
+
+    async function feedbackHerb(p, correto) {
+        const bar = document.getElementById('fb-bar-' + p.id);
+        if (bar) {
+            bar.innerHTML = `<span class="herb-feedback-label" style="text-align:center;flex:1;">${correto ? '✅ Obrigado! Confirmado.' : '❌ Obrigado! Vamos melhorar.'}</span>`;
+            setTimeout(() => bar.remove(), 2500);
+        }
+        try {
+            await loadFirebase();
+            const snap = await window._fbDB.collection('identificacoes')
+                .where('especie', '==', p.nome_cientifico)
+                .where('confirmada', '==', null)
+                .limit(1).get();
+            if (!snap.empty) await snap.docs[0].ref.update({ confirmada: correto });
+            if (correto && p.img) {
+                await window._fbDB.collection('dataset').add({
+                    especie: p.nome_cientifico,
+                    imagem: p.img,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        } catch(e) { console.warn('Feedback herbário Firebase:', e.message); }
     }
 
     function filtrarHerb(termo) {

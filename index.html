@@ -704,6 +704,128 @@
         }
         .herb-noresult-icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
 
+        /* ── GLOSSÁRIO ── */
+        .glossario-wrap { max-width: 700px; margin: 0 auto; }
+        .glossario-search-wrap { position: relative; margin-bottom: 24px; }
+        .glossario-search {
+            width: 100%;
+            padding: 13px 18px 13px 44px;
+            border: 1.5px solid #c8e6c9;
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-mid);
+            background: #fff;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        .glossario-search:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(27,94,32,0.08);
+        }
+        .glossario-search-icon {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem; pointer-events: none; opacity: 0.5;
+        }
+        .glossario-letras {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            margin-bottom: 20px;
+        }
+        .glossario-letra-btn {
+            padding: 5px 10px;
+            border: 1.5px solid #c8e6c9;
+            border-radius: 8px;
+            background: #fff;
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .glossario-letra-btn:hover,
+        .glossario-letra-btn.ativa {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .glossario-grupo { margin-bottom: 28px; }
+        .glossario-grupo-letra {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 2px solid #c8e6c9;
+            margin-bottom: 12px;
+            padding-bottom: 4px;
+        }
+        .glossario-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(165,214,167,0.3);
+            border-left: 3px solid var(--primary);
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .glossario-item:hover { box-shadow: 0 4px 16px rgba(27,94,32,0.10); }
+        .glossario-item-termo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .glossario-item-categoria {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            background: #f1f8e9;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .glossario-item-def {
+            font-size: 0.87rem;
+            color: var(--text-mid);
+            line-height: 1.6;
+            margin-top: 8px;
+            display: none;
+        }
+        .glossario-item.aberto .glossario-item-def { display: block; }
+        .glossario-item.aberto { border-left-color: #2e7d32; }
+        .glossario-noresult {
+            text-align: center; padding: 40px 20px;
+            color: #aaa; font-size: 0.9rem; display: none;
+        }
+
+        /* Dark mode glossário */
+        body.dark-mode .glossario-search {
+            background: #222722; border-color: #2e3a2e; color: #e8f5e9;
+        }
+        body.dark-mode .glossario-search::placeholder { color: #5a7a5a; }
+        body.dark-mode .glossario-letra-btn {
+            background: #222722; border-color: #2e3a2e; color: #81c784;
+        }
+        body.dark-mode .glossario-letra-btn:hover,
+        body.dark-mode .glossario-letra-btn.ativa {
+            background: #2e7d32; color: #fff; border-color: #2e7d32;
+        }
+        body.dark-mode .glossario-grupo-letra { border-bottom-color: #2e3a2e; }
+        body.dark-mode .glossario-item {
+            background: #222722; border-color: #2e3a2e;
+        }
+        body.dark-mode .glossario-item-categoria {
+            background: #1a2e1a; color: #a5c8a7;
+        }
+        body.dark-mode .glossario-item-def { color: #e8f5e9; }
+        body.dark-mode .glossario-noresult { color: #5a7a5a; }
+
         /* ── HERB GRID ── */
         .section-title {
             font-family: 'Cormorant Garamond', serif;
@@ -1289,6 +1411,7 @@
     <div class="nav-tabs">
         <button id="nav-analise" class="active" onclick="showPage('analise')">🔍 Scanner</button>
         <button id="nav-herbario" onclick="showPage('herbario')">🌿 Herbário</button>
+        <button id="nav-glossario" onclick="showPage('glossario')">📖 Glossário</button>
 
     </div>
 </nav>
@@ -1337,6 +1460,28 @@
         </div>
     </div>
 
+</div>
+
+<!-- PAGE: GLOSSÁRIO -->
+<div id="page-glossario" class="page" style="display:none;">
+    <div class="glossario-wrap">
+        <h2 class="section-title">Glossário Botânico</h2>
+        <p class="section-sub">Terminologia científica · Referência rápida</p>
+
+        <div class="glossario-search-wrap" style="margin-top:24px;">
+            <span class="glossario-search-icon">🔍</span>
+            <input type="text" id="glossario-search" class="glossario-search"
+                placeholder="Buscar termo botânico..."
+                oninput="filtrarGlossario(this.value)">
+        </div>
+
+        <div class="glossario-letras" id="glossario-letras"></div>
+        <div id="glossario-lista"></div>
+        <div class="glossario-noresult" id="glossario-noresult">
+            <span style="font-size:2.5rem;display:block;margin-bottom:8px;">🌿</span>
+            Nenhum termo encontrado
+        </div>
+    </div>
 </div>
 
 <!-- MODAL -->
@@ -1398,13 +1543,14 @@
     function showPage(p) {
         document.querySelectorAll('.page').forEach(el => el.style.display = 'none');
         document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
-        const pageMap = { analise: 'analise', herbario: 'herbario', termos: 'page-termos' };
+        const pageMap = { analise: 'analise', herbario: 'herbario', termos: 'page-termos', glossario: 'page-glossario' };
         const el = document.getElementById(pageMap[p]);
         if (el) el.style.display = 'block';
-        const navMap = { analise: 'nav-analise', herbario: 'nav-herbario', termos: 'nav-termos' };
+        const navMap = { analise: 'nav-analise', herbario: 'nav-herbario', termos: 'nav-termos', glossario: 'nav-glossario' };
         const btn = document.getElementById(navMap[p]);
         if (btn) btn.classList.add('active');
         if (p === 'herbario') renderHerb();
+        if (p === 'glossario') iniciarGlossario();
         return;
     }
     function showPage_UNUSED(p) {
@@ -2300,6 +2446,157 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             });
         }
     })();
+
+    /* ══════════════════════════════════════════
+       GLOSSÁRIO BOTÂNICO
+    ══════════════════════════════════════════ */
+    const GLOSSARIO = [
+        // MORFOLOGIA
+        { termo: "Acúleo", cat: "Morfologia", def: "Projeção superficial do tecido da epiderme ou córtex do caule, sem conexão com tecidos vasculares. Diferencia-se do espinho por ser facilmente removido. Exemplo: os acúleos das roseiras." },
+        { termo: "Antese", cat: "Reprodução", def: "Período de abertura e maturidade da flor, quando esta está apta para a polinização. Corresponde ao momento em que as anteras liberam o pólen e o estigma está receptivo." },
+        { termo: "Anemocoria", cat: "Reprodução", def: "Mecanismo de dispersão de sementes ou frutos pelo vento. Plantas anemocóricas possuem estruturas adaptadas como alas, plumas ou pêlos que facilitam o transporte aéreo. Exemplo: dente-de-leão e mamonas." },
+        { termo: "Alporquia", cat: "Cultivo", def: "Técnica de propagação vegetativa em que se induz a formação de raízes em um ramo ainda preso à planta-mãe. O ramo é incisado e envolto em substrato úmido até enraizar, sendo então destacado." },
+        { termo: "Auxina", cat: "Fisiologia", def: "Hormônio vegetal (principalmente o ácido indolacético — AIA) que regula o crescimento celular por elongação, o fototropismo, o gravitropismo e a dominância apical. Produzido principalmente nos meristemas apicais." },
+        // B
+        { termo: "Binômio", cat: "Taxonomia", def: "Nome científico composto por duas palavras latinas: o gênero (com inicial maiúscula) e o epíteto específico (em minúsculo). Sistema criado por Carl von Lineu no século XVIII. Exemplo: Mangifera indica." },
+        { termo: "Biomassa", cat: "Ecologia", def: "Quantidade total de matéria orgânica presente em um organismo ou em um conjunto de organismos de uma área específica. Pode ser expressa em massa seca por unidade de área (g/m² ou t/ha)." },
+        { termo: "Bulbo", cat: "Morfologia", def: "Caule subterrâneo comprimido e achatado (prato do bulbo) rodeado por folhas modificadas e carnosas que armazenam reservas nutritivas. Exemplo: cebola, alho, tulipa e narciso." },
+        // C
+        { termo: "Clado", cat: "Taxonomia", def: "Grupo de organismos que inclui um ancestral comum e todos os seus descendentes. Conceito central da cladística, ramo da sistemática biológica que classifica os seres vivos com base em suas relações evolutivas." },
+        { termo: "Clímax", cat: "Ecologia", def: "Estágio final e estável de uma sucessão ecológica, em que a comunidade vegetal atingiu o equilíbrio com as condições ambientais locais. A vegetação clímax apresenta alta diversidade e biomassa elevada." },
+        { termo: "Cosmopolita", cat: "Taxonomia", def: "Espécie com ampla distribuição geográfica, ocorrendo em diversos biomas e continentes. Opõe-se ao endemismo. Exemplos: samambaia pteridium e a tiririca (Cyperus rotundus)." },
+        { termo: "Cotilédone", cat: "Reprodução", def: "Folha embrionária presente na semente, responsável pelo armazenamento ou absorção de nutrientes durante a germinação. Monocotiledôneas possuem um cotilédone; dicotiledôneas possuem dois." },
+        // E
+        { termo: "Endemia", cat: "Taxonomia", def: "Condição de uma espécie restrita a uma determinada região geográfica, não sendo encontrada naturalmente em outros locais. O Brasil possui elevado número de espécies endêmicas, especialmente na Mata Atlântica e no Cerrado." },
+        { termo: "Endosperma", cat: "Reprodução", def: "Tecido nutritivo presente na semente que fornece reservas para o desenvolvimento do embrião durante a germinação. Pode ser rico em amido (cereais), óleos (oleaginosas) ou proteínas." },
+        { termo: "Epífita", cat: "Ecologia", def: "Planta que cresce sobre outra planta (hospedeira) usando-a apenas como suporte físico, sem parasitá-la. Obtém água e nutrientes da atmosfera, chuva e resíduos orgânicos. Exemplos: orquídeas, bromélias e muitas samambaias." },
+        { termo: "Epíteto", cat: "Taxonomia", def: "Segunda palavra do binômio científico, que identifica a espécie dentro do gênero. Escrito em letras minúsculas e geralmente em latim. Pode fazer referência a características morfológicas, habitats ou homenagens. Exemplo: em Mangifera indica, 'indica' é o epíteto." },
+        { termo: "Estaquia", cat: "Cultivo", def: "Técnica de propagação vegetativa em que segmentos de caule, raiz ou folha são destacados da planta-mãe e colocados em substrato adequado para enraizamento. Produz plantas geneticamente idênticas à matriz." },
+        { termo: "Estípula", cat: "Morfologia", def: "Apêndice foliar geralmente em par, localizado na base do pecíolo. Pode ter funções de proteção do meristema apical, fotossíntese ou fixação de nitrogênio. Nem todas as plantas possuem estípulas." },
+        { termo: "Estolão", cat: "Morfologia", def: "Caule rasteiro e horizontal que cresce sobre o solo, com nós que formam raízes adventícias e novas plantas. Estrutura de propagação vegetativa. Exemplo: morangueiro e grama-bermuda." },
+        { termo: "Etileno", cat: "Fisiologia", def: "Hormônio vegetal gasoso (C₂H₄) que regula o amadurecimento de frutos, a senescência foliar, a abscisão e respostas ao estresse mecânico. Muito utilizado comercialmente para acelerar o amadurecimento de frutos." },
+        // F
+        { termo: "Fenologia", cat: "Ecologia", def: "Estudo dos fenômenos periódicos e cíclicos dos seres vivos em relação ao clima e ao ambiente, como brotação, floração, frutificação e queda de folhas. Fundamental para o monitoramento de biodiversidade e agricultura." },
+        { termo: "Filogenia", cat: "Taxonomia", def: "Estudo das relações evolutivas e da história ancestral entre grupos de organismos. Representada graficamente por cladogramas ou árvores filogenéticas. Base da sistemática moderna." },
+        { termo: "Filotaxia", cat: "Morfologia", def: "Disposição das folhas ao longo do caule segundo um padrão específico. Os principais tipos são: alterna (uma folha por nó), oposta (duas folhas por nó) e verticilada (três ou mais folhas por nó). Influencia a captação de luz solar." },
+        { termo: "Fitossociologia", cat: "Ecologia", def: "Ramo da ecologia vegetal que estuda as comunidades de plantas, sua composição, estrutura, distribuição e relações com o ambiente. Utiliza parâmetros como densidade, frequência, dominância e índice de valor de importância." },
+        { termo: "Fotossíntese", cat: "Fisiologia", def: "Processo bioquímico pelo qual as plantas convertem energia luminosa em energia química, usando CO₂ e H₂O para produzir glicose e liberar O₂. Ocorre nos cloroplastos, principalmente nas folhas. Equação simplificada: 6CO₂ + 6H₂O + luz → C₆H₁₂O₆ + 6O₂." },
+        { termo: "Fototropismo", cat: "Fisiologia", def: "Movimento de crescimento vegetal em resposta à luz. O fototropismo positivo ocorre quando o crescimento se dá em direção à fonte luminosa; o negativo, ao contrário. Mediado principalmente pela auxina." },
+        // G
+        { termo: "Gavinha", cat: "Morfologia", def: "Estrutura filamentosa e enrolada que as plantas trepadeiras utilizam para se fixar em suportes. Pode ser uma folha, folíolo, caule ou ramo modificado. Exemplos: maracujazeiro e videira." },
+        { termo: "Geotropismo", cat: "Fisiologia", def: "Resposta de crescimento das plantas ao estímulo gravitacional. As raízes apresentam geotropismo positivo (crescem em direção ao centro da Terra) e os caules geotropismo negativo (crescem em sentido contrário)." },
+        { termo: "Germinação", cat: "Reprodução", def: "Processo pelo qual o embrião da semente retoma o crescimento após um período de dormência. Requer condições adequadas de temperatura, umidade e, em alguns casos, luz. Culmina com a emissão da radícula e do hipocótilo." },
+        // H
+        { termo: "Hemiparasita", cat: "Ecologia", def: "Planta que realiza fotossíntese parcialmente, mas extrai água, minerais e às vezes carboidratos de uma planta hospedeira através de haustórios. Exemplo: erva-de-passarinho (Struthanthus spp.)." },
+        { termo: "Hidrocoria", cat: "Reprodução", def: "Dispersão de sementes ou frutos pela água. Plantas hidrocóricas possuem frutos com estruturas flutuantes como cortiça, tecidos aerênquimáticos ou envoltórios impermeáveis. Exemplo: coco-da-baía e ninfeia." },
+        { termo: "Holótipo", cat: "Taxonomia", def: "Espécime único escolhido pelo autor de uma nova espécie como referência taxonômica oficial. Depositado em herbário científico, serve como padrão para comparação e verificação da identidade da espécie." },
+        // I
+        { termo: "Inflorescência", cat: "Reprodução", def: "Conjunto de flores dispostas em um eixo floral de forma organizada e característica. Os tipos principais incluem: racemo, espiga, umbela, capítulo, panícula e cimeira. A forma da inflorescência é um importante caráter taxonômico." },
+        // L
+        { termo: "Limbo", cat: "Morfologia", def: "Parte plana e expandida da folha, responsável pela maior parte da fotossíntese e transpiração. Possui nervuras que transportam água, sais minerais e fotoassimilados. Também chamado de lâmina foliar." },
+        // N
+        { termo: "Nervura", cat: "Morfologia", def: "Estrutura vascular que percorre o limbo foliar, responsável pelo transporte de água, minerais e produtos da fotossíntese. O padrão de nervação (nervação) é um caráter taxonômico importante: peninérvea, palminérvea ou paralelinérvea." },
+        { termo: "NPK", cat: "Cultivo", def: "Sigla que representa os três macronutrientes essenciais para as plantas: Nitrogênio (N), Fósforo (P) e Potássio (K). O N estimula o crescimento vegetativo; o P favorece o desenvolvimento radicular e floral; o K melhora a resistência e a qualidade dos frutos." },
+        // O
+        { termo: "Osmose", cat: "Fisiologia", def: "Movimento de água através de uma membrana semipermeável, do meio de menor concentração de solutos para o de maior concentração, até atingir o equilíbrio. Fundamental para a absorção de água pelas raízes e para o turgor celular." },
+        // P
+        { termo: "Parasita", cat: "Ecologia", def: "Planta que depende totalmente de uma hospedeira para obter água, minerais e carboidratos, sem realizar fotossíntese. Fixa-se à hospedeira por haustórios. Exemplo: cipo-chumbo (Cassytha filiformis) e cipó-fogo (Cuscuta spp.)." },
+        { termo: "Pecíolo", cat: "Morfologia", def: "Estrutura cilíndrica que conecta o limbo foliar ao caule ou ramo. Contém feixes vasculares e pode variar em comprimento, espessura e forma. Folhas sem pecíolo são chamadas sésseis." },
+        { termo: "pH", cat: "Cultivo", def: "Medida da acidez ou alcalinidade do solo, numa escala de 0 a 14. pH 7 é neutro; abaixo de 7 é ácido; acima de 7 é alcalino. Influencia diretamente a disponibilidade de nutrientes para as plantas. A maioria das culturas prefere pH entre 5,5 e 6,5." },
+        { termo: "Pioneira", cat: "Ecologia", def: "Espécie que coloniza ambientes perturbados ou degradados, sendo a primeira a se estabelecer em áreas abertas. Geralmente de crescimento rápido, intolerante à sombra e com alta produção de sementes. Fundamental nos processos de sucessão ecológica." },
+        { termo: "Polinização", cat: "Reprodução", def: "Transferência de grãos de pólen das anteras para o estigma de uma flor, possibilitando a fecundação. Pode ocorrer pelo vento (anemofilia), por insetos (entomofilia), por aves (ornitofilia) ou por outros vetores." },
+        // R
+        { termo: "Rizoma", cat: "Morfologia", def: "Caule subterrâneo horizontal, com nós e entrenós, do qual partem raízes adventícias e brotações aéreas. Serve como órgão de reserva e propagação vegetativa. Exemplos: gengibre, bananeira, bambu e íris." },
+        { termo: "Rizóforo", cat: "Morfologia", def: "Estrutura especializada de certas plantas (como Selaginella) que produz raízes. Morfologicamente intermediário entre caule e raiz, considerado uma synapomorfia do grupo das licopodíneas." },
+        // S
+        { termo: "Saprófita", cat: "Ecologia", def: "Organismo que obtém nutrientes de matéria orgânica morta em decomposição. Em plantas, o termo é aplicado a espécies sem clorofila que dependem de fungos micorrízicos para se nutrir, como algumas orquídeas subterrâneas." },
+        { termo: "Sinonímia", cat: "Taxonomia", def: "Na taxonomia, conjunto de nomes científicos aplicados ao mesmo táxon por diferentes autores. O nome válido é o mais antigo publicado de forma correta (princípio da prioridade). Os demais são sinônimos." },
+        { termo: "Substrato", cat: "Cultivo", def: "Material utilizado como meio de cultivo para plantas, fornecendo suporte físico, arejamento e retenção de umidade. Pode ser composto por terra, areia, vermiculita, perlita, fibra de coco, casca de pinus, entre outros." },
+        // T
+        { termo: "Táxon", cat: "Taxonomia", def: "Unidade taxonômica de qualquer nível hierárquico (espécie, gênero, família, ordem, etc.). O plural é táxons ou taxa. Cada táxon agrupa organismos com características evolutivas em comum." },
+        { termo: "Transpiração", cat: "Fisiologia", def: "Processo de perda de vapor d'água pela planta, principalmente através dos estômatos das folhas. Representa mais de 90% da água absorvida pelas raízes. Fundamental para o transporte de água e nutrientes e para a regulação da temperatura foliar." },
+        { termo: "Tubérculo", cat: "Morfologia", def: "Caule subterrâneo modificado e intumescido que armazena amido e outros nutrientes. Diferencia-se do bulbo por não possuir folhas modificadas envolventes. Exemplos: batata inglesa, batatinha e cará." },
+        { termo: "Turgor", cat: "Fisiologia", def: "Estado de rigidez celular resultante da pressão osmótica da água no interior do vacúolo contra a parede celular. Responsável pela firmeza dos tecidos vegetais. A perda de turgor leva ao murchamento (plasmólise)." },
+        // V
+        { termo: "Vernalização", cat: "Reprodução", def: "Processo pelo qual a exposição a baixas temperaturas por um período determinado induz ou acelera a floração de certas plantas. Mecanismo adaptativo que garante a floração na primavera. Importante em cereais como trigo e centeio." },
+        // Z
+        { termo: "Zoocoria", cat: "Reprodução", def: "Dispersão de sementes ou frutos por animais. Pode ocorrer por ingestão e posterior eliminação das sementes (endozoocoria), transporte externo preso ao corpo do animal (epizoocoria) ou por armazenamento como reserva alimentar (sinzoocoria). Exemplos: frutos carnosos dispersos por pássaros e frutos com ganchos transportados por mamíferos." },
+        { termo: "Adubação", cat: "Cultivo", def: "Aplicação de substâncias que fornecem nutrientes às plantas para corrigir deficiências do solo e aumentar a produtividade. Pode ser mineral (fertilizantes químicos), orgânica (composto, esterco, húmus) ou organomineral." },
+        { termo: "Drenagem", cat: "Cultivo", def: "Capacidade do solo de escoar o excesso de água, evitando o encharcamento e a asfixia radicular. Solos com boa drenagem possuem estrutura granular e boa macroporosidade. Crucial para a saúde do sistema radicular." },
+        { termo: "Enxertia", cat: "Cultivo", def: "Técnica de propagação vegetativa em que um segmento de planta (enxerto) é unido a outra planta (porta-enxerto ou cavaleiro), formando um único organismo. Muito utilizada em fruticultura para combinar características desejáveis de duas plantas." },
+    ];
+
+    // Ordenar alfabeticamente
+    GLOSSARIO.sort((a, b) => a.termo.localeCompare(b.termo, 'pt'));
+
+    function iniciarGlossario() {
+        const letrasUnicas = [...new Set(GLOSSARIO.map(g => g.termo[0].toUpperCase()))].sort();
+        const letrasEl = document.getElementById('glossario-letras');
+        if (!letrasEl) return;
+        letrasEl.innerHTML = letrasUnicas.map(l =>
+            `<button class="glossario-letra-btn" onclick="filtrarLetra('${l}')">${l}</button>`
+        ).join('');
+        renderGlossario(GLOSSARIO);
+    }
+
+    function renderGlossario(lista) {
+        const el = document.getElementById('glossario-lista');
+        const noresult = document.getElementById('glossario-noresult');
+        if (!el) return;
+        if (lista.length === 0) {
+            el.innerHTML = '';
+            noresult.style.display = 'block';
+            return;
+        }
+        noresult.style.display = 'none';
+
+        // Agrupar por letra
+        const grupos = {};
+        lista.forEach(g => {
+            const l = g.termo[0].toUpperCase();
+            if (!grupos[l]) grupos[l] = [];
+            grupos[l].push(g);
+        });
+
+        el.innerHTML = Object.keys(grupos).sort().map(letra => `
+            <div class="glossario-grupo">
+                <div class="glossario-grupo-letra">${letra}</div>
+                ${grupos[letra].map(g => `
+                    <div class="glossario-item" onclick="toggleGlossarioItem(this)">
+                        <div class="glossario-item-termo">
+                            ${g.termo}
+                            <span class="glossario-item-categoria">${g.cat}</span>
+                        </div>
+                        <div class="glossario-item-def">${g.def}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    }
+
+    function toggleGlossarioItem(el) {
+        el.classList.toggle('aberto');
+    }
+
+    function filtrarGlossario(termo) {
+        // Limpar filtro de letra ativa
+        document.querySelectorAll('.glossario-letra-btn').forEach(b => b.classList.remove('ativa'));
+        if (!termo.trim()) { renderGlossario(GLOSSARIO); return; }
+        const t = termo.toLowerCase();
+        renderGlossario(GLOSSARIO.filter(g =>
+            g.termo.toLowerCase().includes(t) ||
+            g.def.toLowerCase().includes(t) ||
+            g.cat.toLowerCase().includes(t)
+        ));
+    }
+
+    function filtrarLetra(letra) {
+        document.getElementById('glossario-search').value = '';
+        document.querySelectorAll('.glossario-letra-btn').forEach(b => {
+            b.classList.toggle('ativa', b.textContent === letra);
+        });
+        renderGlossario(GLOSSARIO.filter(g => g.termo[0].toUpperCase() === letra));
+    }
 
     /* ── FLOATING LEAVES ENGINE ── */
     (function() {

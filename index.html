@@ -1910,54 +1910,15 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         plantas.forEach(p => {
             const div = document.createElement('div');
             div.className = 'herb-card';
-            div._plantData = p;
-
-            const semFeedback = p._confirmada === undefined || p._confirmada === null;
-
-            // Imagem e label abrem o modal
-            const imgEl = document.createElement('img');
-            imgEl.src = p.img;
-            imgEl.alt = p.nome_popular || '';
-            imgEl.onclick = () => openModal(p);
-
-            const labelEl = document.createElement('div');
-            labelEl.className = 'herb-label';
-            labelEl.onclick = () => openModal(p);
-            labelEl.innerHTML = `
-                <span class="herb-label-name">${p.nome_popular || 'Espécie'}</span>
-                <span class="herb-label-sci">${formatarNomeCientifico(p.nome_cientifico)}</span>
+            div.onclick = () => openModal(p);
+            div.innerHTML = `
+                <img src="${p.img}" alt="${p.nome_popular}">
+                <div class="herb-label">
+                    <span class="herb-label-name">${p.nome_popular || 'Espécie'}</span>
+                    <span class="herb-label-sci">${formatarNomeCientifico(p.nome_cientifico)}</span>
+                </div>
+                <div class="herb-badge">ID</div>
             `;
-
-            const badgeEl = document.createElement('div');
-            badgeEl.className = 'herb-badge';
-            badgeEl.textContent = 'ID';
-
-            div.appendChild(imgEl);
-            div.appendChild(labelEl);
-            div.appendChild(badgeEl);
-
-            // Barra de feedback só para plantas sem confirmação
-            if (semFeedback) {
-                const bar = document.createElement('div');
-                bar.className = 'herb-feedback-bar';
-                bar.id = 'fb-bar-' + p.id;
-                bar.innerHTML = `<span class="herb-feedback-label">Identificação correta?</span>`;
-
-                const btnSim = document.createElement('button');
-                btnSim.className = 'herb-fb-btn herb-fb-sim';
-                btnSim.textContent = '✅ Sim';
-                btnSim.onclick = (e) => { e.stopPropagation(); feedbackHerb(p, true); };
-
-                const btnNao = document.createElement('button');
-                btnNao.className = 'herb-fb-btn herb-fb-nao';
-                btnNao.textContent = '❌ Não';
-                btnNao.onclick = (e) => { e.stopPropagation(); feedbackHerb(p, false); };
-
-                bar.appendChild(btnSim);
-                bar.appendChild(btnNao);
-                div.appendChild(bar);
-            }
-
             list.appendChild(div);
         });
     }
@@ -2176,6 +2137,30 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         document.getElementById('detailModal').style.display = 'flex';
         // Destacar termos do glossário nas info-values
         destacarTermosGlossario();
+        // Mostrar feedback se planta sem confirmação
+        verificarFeedbackModal(p);
+    }
+
+    async function verificarFeedbackModal(p) {
+        // Remove feedback anterior se houver
+        const existing = document.getElementById('feedback-box');
+        if (existing) existing.remove();
+
+        // Verifica no Firebase se essa planta tem confirmação pendente
+        try {
+            await loadFirebase();
+            const snap = await window._fbDB.collection('identificacoes')
+                .where('especie', '==', p.nome_cientifico)
+                .where('confirmada', '==', null)
+                .limit(1).get();
+            if (!snap.empty) {
+                const docId = snap.docs[0].id;
+                window._currentFeedbackImg = p.img || null;
+                renderFeedback(p.nome_cientifico, p.img, docId);
+            }
+        } catch(e) {
+            // Firebase indisponível — silencioso
+        }
     }
 
     function destacarTermosGlossario() {

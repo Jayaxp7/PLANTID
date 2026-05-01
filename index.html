@@ -2479,6 +2479,10 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         toast.classList.remove('toast-show');
         clearTimeout(_toastTimer);
         clearInterval(_countdownTimer);
+        // Sempre reabilita o botão ao fechar o toast
+        window._countdownAtivo = false;
+        const btn = document.getElementById('runBtn');
+        if (btn) btn.disabled = false;
     }
 
     function tratarErro(mensagemErro, btn) {
@@ -2492,8 +2496,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             msg.includes('overloaded') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
             btn.disabled = true;
             window._countdownAtivo = true;
-            showToast('warn', '🌿', 'Servidor sobrecarregado',
-                'O Gemini está com alta demanda no momento. Aguarde 10 segundos antes de tentar novamente.',
+            showToast('warn', '🌿', 'Servidor ocupado',
+                'O servidor está temporariamente ocupado. Aguarde alguns segundos e tente novamente.',
                 { countdown: 10 });
 
         // 403 — Acesso negado / Chave inválida

@@ -4,7 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PlantID — Painel Admin</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+function iniciarMapa(dados, porEstado) {
+    const paths = document.querySelectorAll('#mapa-brasil path');
+    const tooltip = document.getElementById('mapa-tooltip');
+
+    // Colorir estados com dados
+    paths.forEach(path => {
+        const uf = path.dataset.uf;
+        if (!porEstado[uf]) {
+            path.classList.add('sem-dado');
+        }
+    });
+
+    // Construir dados por estado
+    const dadosPorEstado = {};
+    dados.forEach(d => {
+        if (!d.estado) return;
+        if (!dadosPorEstado[d.estado]) {
+            dadosPorEstado[d.estado] = {
+                total: 0, corretas: 0, incorretas: 0, pendentes: 0,
+                especies: {}, ultimaData: null
+            };
+        }
+        const e = dadosPorEstado[d.estado];
+        e.total++;
+        if (d.confirmada === true) e.corretas++;
+        else if (d.confirmada === false) e.incorretas++;
+        else e.pendentes++;
+        if (d.especie) e.especies[d.especie] = (e.especies[d.especie]||0)+1;
+        if (d.timestamp?.toDate) {
+            const dt = d.timestamp.toDate();
+            if (!e.ultimaData || dt > e.ultimaData) e.ultimaData = dt;
+        }
+    });
+
+    paths.forEach(path => {
+        const uf = path.dataset.uf;
+        const nome = path.dataset.nome;
+        const e = dadosPorEstado[uf];
+
+        path.addEventListener('mouseenter', ev => {
+            // Highlight
+            paths.forEach(p => p.classList.remove('ativo'));
+            path.classList.add('ativo');
+
+            if (!e) {
+                tooltip.innerHTML = `<div class="mapa-tooltip-titulo">${nome} (${uf})</div><div class="mapa-tooltip-linha">Nenhuma identificação ainda</div>`;
+            } else {
+                const topEspecies = Object.entries(e.especies).sort((a,b)=>b[1]-a[1]).slice(0,3);
+                const taxa = e.corretas + e.incorretas > 0
+                    ? ((e.corretas/(e.corretas+e.incorretas))*100).toFixed(0)+'%' : '—';
+                const ultima = e.ultimaData ? e.ultimaData.toLocaleDateString('pt-BR') : '—';
+                tooltip.innerHTML = `
+                    <div class="mapa-tooltip-titulo">📍 ${nome} (${uf})</div>
+                    <div class="mapa-tooltip-linha"><span>Total de identificações</span><span class="mapa-tooltip-val">${e.total}</span></div>
+                    <div class="mapa-tooltip-linha"><span>✅ Corretas</span><span class="mapa-tooltip-val">${e.corretas}</span></div>
+                    <div class="mapa-tooltip-linha"><span>❌ Incorretas</span><span class="mapa-tooltip-val">${e.incorretas}</span></div>
+                    <div class="mapa-tooltip-linha"><span>⏳ Pendentes</span><span class="mapa-tooltip-val">${e.pendentes}</span></div>
+                    <div class="mapa-tooltip-linha"><span>🎯 Taxa de acerto</span><span class="mapa-tooltip-val">${taxa}</span></div>
+                    <div class="mapa-tooltip-linha"><span>🌿 Espécies únicas</span><span class="mapa-tooltip-val">${Object.keys(e.especies).length}</span></div>
+                    ${topEspecies.length ? `<div class="mapa-tooltip-linha" style="margin-top:8px;"><span>Top espécies:</span></div>
+                    ${topEspecies.map(([esp,n]) => `<div class="mapa-tooltip-linha"><span><em>${esp.split(' ').slice(0,2).join(' ')}</em></span><span class="mapa-tooltip-val">${n}x</span></div>`).join('')}` : ''}
+                    <div class="mapa-tooltip-linha" style="margin-top:6px;color:#aaa;font-size:0.75rem;"><span>Última identificação:</span><span>${ultima}</span></div>
+                `;
+            }
+            tooltip.style.display = 'block';
+        });
+
+        path.addEventListener('mousemove', ev => {
+            const x = ev.clientX + 16;
+            const y = ev.clientY - 10;
+            const tw = tooltip.offsetWidth;
+            const th = tooltip.offsetHeight;
+            tooltip.style.left = (x + tw > window.innerWidth ? ev.clientX - tw - 10 : x) + 'px';
+            tooltip.style.top = (y + th > window.innerHeight ? ev.clientY - th - 10 : y) + 'px';
+        });
+
+        path.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+            path.classList.remove('ativo');
+        });
+    });
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -112,6 +195,34 @@
 
     /* ESTADO */
     .estado-badge { display: inline-block; background: #e8f5e9; color: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+
+    /* MAPA */
+    .mapa-card {
+        background: var(--card); border-radius: 18px; padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(165,214,167,0.2);
+        margin-bottom: 32px;
+    }
+    #mapa-brasil { width: 100%; max-width: 700px; display: block; margin: 0 auto; cursor: pointer; }
+    #mapa-brasil path {
+        fill: #c8e6c9; stroke: #fff; stroke-width: 1.5;
+        transition: fill 0.2s; cursor: pointer;
+    }
+    #mapa-brasil path:hover { fill: #1b5e20; }
+    #mapa-brasil path.ativo { fill: #2e7d32; }
+    #mapa-brasil path.sem-dado { fill: #e0e0e0; }
+    .mapa-tooltip {
+        position: fixed; background: #fff; border-radius: 14px;
+        padding: 16px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        pointer-events: none; z-index: 9999; display: none;
+        border-left: 4px solid #1b5e20; min-width: 220px;
+        font-family: 'DM Sans', sans-serif;
+    }
+    .mapa-tooltip-titulo { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 700; color: #1b5e20; margin-bottom: 10px; }
+    .mapa-tooltip-linha { font-size: 0.82rem; color: #555; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 16px; }
+    .mapa-tooltip-val { font-weight: 600; color: #1b5e20; }
+    .mapa-legenda { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 0.78rem; color: #888; justify-content: center; }
+    .mapa-legenda-cor { width: 12px; height: 12px; border-radius: 3px; }
+
 </style>
 </head>
 <body>
@@ -127,6 +238,9 @@
         <div class="login-erro" id="login-erro">Senha incorreta. Tente novamente.</div>
     </div>
 </div>
+
+<!-- TOOLTIP MAPA -->
+<div class="mapa-tooltip" id="mapa-tooltip"></div>
 
 <!-- PAINEL -->
 <div id="painel">
@@ -147,6 +261,75 @@
         <div id="conteudo" style="display:none;">
             <!-- MÉTRICAS -->
             <div class="metrics-grid" id="metrics-grid"></div>
+
+            <!-- MAPA DO BRASIL -->
+            <div class="mapa-card">
+                <div class="chart-title">🗺️ Mapa de Identificações por Estado</div>
+                <p style="font-size:0.82rem;color:#888;margin-bottom:16px;text-align:center;">Clique em um estado para ver os dados detalhados</p>
+                <svg id="mapa-brasil" viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Estados do Brasil simplificados -->
+                    <path id="AC" data-uf="AC" data-nome="Acre" d="M95,420 L180,380 L210,400 L220,430 L180,460 L130,450 Z"/>
+                    <path id="AL" data-uf="AL" data-nome="Alagoas" d="M620,340 L645,330 L655,345 L645,360 L620,355 Z"/>
+                    <path id="AM" data-uf="AM" data-nome="Amazonas" d="M150,230 L320,180 L370,220 L380,310 L340,360 L280,380 L210,400 L180,380 L130,350 L120,290 Z"/>
+                    <path id="AP" data-uf="AP" data-nome="Amapá" d="M400,110 L440,90 L460,130 L450,170 L410,175 L390,150 Z"/>
+                    <path id="BA" data-uf="BA" data-nome="Bahia" d="M530,290 L620,260 L660,300 L670,380 L650,440 L590,470 L540,450 L510,400 L510,340 Z"/>
+                    <path id="CE" data-uf="CE" data-nome="Ceará" d="M570,210 L620,200 L645,230 L630,270 L590,270 L560,250 Z"/>
+                    <path id="DF" data-uf="DF" data-nome="Distrito Federal" d="M507,378 L518,378 L518,390 L507,390 Z"/>
+                    <path id="ES" data-uf="ES" data-nome="Espírito Santo" d="M640,410 L660,400 L668,425 L655,445 L638,435 Z"/>
+                    <path id="GO" data-uf="GO" data-nome="Goiás" d="M460,330 L530,310 L545,360 L530,410 L490,430 L455,410 L445,370 Z"/>
+                    <path id="MA" data-uf="MA" data-nome="Maranhão" d="M460,200 L530,185 L555,220 L545,270 L500,285 L460,270 L445,240 Z"/>
+                    <path id="MG" data-uf="MG" data-nome="Minas Gerais" d="M530,380 L620,360 L650,395 L640,450 L590,475 L540,460 L510,430 L515,390 Z"/>
+                    <path id="MS" data-uf="MS" data-nome="Mato Grosso do Sul" d="M370,440 L450,420 L465,470 L450,520 L390,530 L355,500 L350,460 Z"/>
+                    <path id="MT" data-uf="MT" data-nome="Mato Grosso" d="M290,290 L400,260 L440,300 L450,380 L410,420 L350,430 L300,410 L275,360 Z"/>
+                    <path id="PA" data-uf="PA" data-nome="Pará" d="M320,150 L440,120 L470,160 L480,210 L460,260 L400,285 L350,280 L300,260 L280,210 Z"/>
+                    <path id="PB" data-uf="PB" data-nome="Paraíba" d="M630,255 L665,248 L672,262 L660,275 L630,272 Z"/>
+                    <path id="PE" data-uf="PE" data-nome="Pernambuco" d="M580,270 L650,258 L665,272 L655,288 L615,292 L575,285 Z"/>
+                    <path id="PI" data-uf="PI" data-nome="Piauí" d="M510,215 L565,205 L580,240 L565,280 L530,285 L505,265 Z"/>
+                    <path id="PR" data-uf="PR" data-nome="Paraná" d="M430,530 L510,510 L535,545 L515,585 L450,595 L415,570 Z"/>
+                    <path id="RJ" data-uf="RJ" data-nome="Rio de Janeiro" d="M615,445 L650,435 L662,455 L648,470 L618,465 Z"/>
+                    <path id="RN" data-uf="RN" data-nome="Rio Grande do Norte" d="M635,230 L668,225 L675,245 L658,258 L635,252 Z"/>
+                    <path id="RO" data-uf="RO" data-nome="Rondônia" d="M220,340 L290,310 L305,350 L300,400 L255,415 L215,400 Z"/>
+                    <path id="RR" data-uf="RR" data-nome="Roraima" d="M280,100 L340,80 L365,120 L355,170 L310,180 L275,155 Z"/>
+                    <path id="RS" data-uf="RS" data-nome="Rio Grande do Sul" d="M430,620 L510,600 L530,645 L505,695 L450,700 L415,665 Z"/>
+                    <path id="SC" data-uf="SC" data-nome="Santa Catarina" d="M435,585 L515,568 L528,600 L510,618 L438,618 Z"/>
+                    <path id="SE" data-uf="SE" data-nome="Sergipe" d="M640,355 L658,348 L664,362 L655,372 L638,368 Z"/>
+                    <path id="SP" data-uf="SP" data-nome="São Paulo" d="M490,470 L575,450 L600,480 L585,525 L515,535 L475,510 Z"/>
+                    <path id="TO" data-uf="TO" data-nome="Tocantins" d="M440,265 L500,250 L515,300 L510,360 L465,375 L435,350 L430,300 Z"/>
+                    <!-- Siglas dos estados -->
+                    <text x="148" y="430" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">AC</text>
+                    <text x="635" y="348" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">AL</text>
+                    <text x="248" y="295" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">AM</text>
+                    <text x="425" y="140" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">AP</text>
+                    <text x="585" y="370" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">BA</text>
+                    <text x="600" y="240" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">CE</text>
+                    <text x="513" y="386" font-size="6" fill="#fff" text-anchor="middle" pointer-events="none">DF</text>
+                    <text x="652" y="425" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">ES</text>
+                    <text x="490" y="380" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">GO</text>
+                    <text x="495" y="238" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">MA</text>
+                    <text x="578" y="425" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">MG</text>
+                    <text x="405" y="480" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">MS</text>
+                    <text x="360" y="355" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">MT</text>
+                    <text x="385" y="215" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">PA</text>
+                    <text x="650" y="264" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">PB</text>
+                    <text x="618" y="278" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">PE</text>
+                    <text x="537" y="250" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">PI</text>
+                    <text x="472" y="558" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">PR</text>
+                    <text x="638" y="455" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">RJ</text>
+                    <text x="654" y="243" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">RN</text>
+                    <text x="258" y="375" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">RO</text>
+                    <text x="318" y="135" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">RR</text>
+                    <text x="470" y="660" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">RS</text>
+                    <text x="480" y="598" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">SC</text>
+                    <text x="650" y="362" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">SE</text>
+                    <text x="535" y="495" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">SP</text>
+                    <text x="472" y="315" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">TO</text>
+                </svg>
+                <div class="mapa-legenda">
+                    <div class="mapa-legenda-cor" style="background:#e0e0e0;"></div> Sem dados
+                    <div class="mapa-legenda-cor" style="background:#c8e6c9;margin-left:8px;"></div> Com identificações
+                    <div class="mapa-legenda-cor" style="background:#1b5e20;margin-left:8px;"></div> Selecionado
+                </div>
+            </div>
 
             <!-- GRÁFICOS -->
             <div class="charts-grid">
@@ -308,9 +491,15 @@ function renderizarPainel(dados) {
         type: 'doughnut',
         data: {
             labels: ['Corretas', 'Incorretas', 'Pendentes'],
-            datasets: [{ data: [confirmadas, incorretas, pendentes], backgroundColor: ['#2e7d32','#c62828','#e65100'], borderWidth: 0 }]
+            datasets: [{ data: [confirmadas, incorretas, pendentes], backgroundColor: ['#2e7d32','#b71c1c','#f9a825'], borderWidth: 0 }]
         },
-        options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
+        options: {
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${total > 0 ? ((ctx.raw/total)*100).toFixed(1) : 0}%)` } }
+            },
+            maintainAspectRatio: false
+        }
     });
 
     // Gráfico meses
@@ -330,6 +519,9 @@ function renderizarPainel(dados) {
         },
         options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, maintainAspectRatio: false }
     });
+
+    // MAPA INTERATIVO
+    iniciarMapa(dados, porEstado);
 
     // Tabela últimas 50
     const ultimas = dados.slice(0, 50);

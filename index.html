@@ -382,6 +382,48 @@
             min-height: 20px;
         }
 
+        /* ── TOAST DE ERRO ── */
+        #plantid-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 24px;
+            max-width: 360px;
+            width: calc(100% - 48px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events: none;
+            border-left: 5px solid #c62828;
+        }
+        #plantid-toast.toast-show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        #plantid-toast.toast-warn { border-left-color: #e65100; }
+        #plantid-toast.toast-info { border-left-color: #1b5e20; }
+        .toast-icon { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+        .toast-title { font-weight: 700; font-size: 0.95rem; color: #1a1a1a; margin-bottom: 4px; }
+        .toast-msg { font-size: 0.82rem; color: #555; line-height: 1.5; }
+        .toast-countdown { font-size: 0.78rem; color: #888; margin-top: 8px; }
+        .toast-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 18px;
+            background: #1b5e20;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* ── HERB GRID ── */
         .section-title {
             font-family: 'Cormorant Garamond', serif;
@@ -1169,15 +1211,23 @@
             const checkData = await check.json();
 
             if (!checkData.candidates || !checkData.candidates[0]) {
-                const errDetail = checkData.error ? checkData.error.message : JSON.stringify(checkData);
-                throw new Error("Etapa 1 — " + errDetail);
+                const sc1 = check.status;
+                const em1 = checkData.error?.message || JSON.stringify(checkData).slice(0, 200);
+                if (sc1 === 503 || em1.includes('high demand') || em1.includes('RESOURCE_EXHAUSTED')) throw new Error("503");
+                if (sc1 === 403 || em1.includes('PERMISSION_DENIED') || em1.includes('API key')) throw new Error("403");
+                if (sc1 === 404 || em1.includes('not found')) throw new Error("404");
+                if (sc1 === 400 || em1.includes('INVALID_ARGUMENT')) throw new Error("400");
+                throw new Error("Etapa 1 — " + em1);
             }
 
             const rawName = checkData.candidates[0].content.parts[0].text.trim();
 
             if (rawName.toUpperCase().includes("INDEFINIDO") || rawName.split(' ').length < 2) {
-                status.innerText = "⚠️ Não foi possível identificar a espécie na imagem.";
-                setTimeout(() => { status.innerText = ""; btn.disabled = false; }, 3000);
+                btn.disabled = false;
+                status.innerText = "";
+                showToast('info', '🔍', 'Planta não identificada',
+                    'Não foi possível identificar a espécie nessa imagem. Tente uma foto mais próxima, com boa iluminação e foco nas folhas ou flores.',
+                    { duracao: 7000 });
                 return;
             }
 
@@ -1275,8 +1325,13 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             const fullData = await full.json();
 
             if (!fullData.candidates || !fullData.candidates[0]) {
-                const errDetail = fullData.error ? fullData.error.message : JSON.stringify(fullData).slice(0, 300);
-                throw new Error("Etapa 2 — " + errDetail);
+                const status_code = full.status;
+                const errMsg = fullData.error?.message || '';
+                if (status_code === 400) throw new Error("400");
+                if (status_code === 403) throw new Error("403");
+                if (status_code === 404) throw new Error("404");
+                if (status_code === 503 || errMsg.includes('high demand') || errMsg.includes('RESOURCE_EXHAUSTED')) throw new Error("503");
+                throw new Error("Etapa 2 — " + errMsg);
             }
 
             // Parse robusto: remove possíveis blocos markdown antes de parsear
@@ -1320,10 +1375,11 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             };
 
         } catch (e) {
-            status.innerText = "";
-            alert("Erro: " + e.message);
+            console.error('PlantID erro:', e.message);
+            tratarErro(e.message, btn);
         } finally {
-            btn.disabled = false;
+            // Só reabilita se não houver countdown ativo (high demand)
+            if (!window._countdownAtivo) btn.disabled = false;
         }
     };
 
@@ -1536,124 +1592,9 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         document.getElementById('detailModal').style.display = 'none';
     }
 
-    /* ── COMPARTILHAR IDENTIFICAÇÃO ── */
-    function compartilharPlanta() {
-        const img = document.getElementById('m-img');
-        const nomePopular = document.querySelector('.modal-plant-name')?.innerText || 'Planta Identificada';
-        const nomeCientifico = document.querySelector('.modal-plant-sci')?.innerText || '';
-
-        // Cria canvas com a foto + overlay de texto
-        const canvas = document.createElement('canvas');
-        const SIZE = 1080;
-        canvas.width = SIZE;
-        canvas.height = SIZE;
-        const ctx = canvas.getContext('2d');
-
-        const image = new Image();
-        image.crossOrigin = 'anonymous';
-        image.onload = () => {
-            // Foto como fundo quadrado (crop centralizado)
-            const ratio = image.width / image.height;
-            let sx = 0, sy = 0, sw = image.width, sh = image.height;
-            if (ratio > 1) { sw = image.height; sx = (image.width - sw) / 2; }
-            else { sh = image.width; sy = (image.height - sh) / 2; }
-            ctx.drawImage(image, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
-
-            // Gradiente inferior
-            const grad = ctx.createLinearGradient(0, SIZE * 0.45, 0, SIZE);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, 'rgba(0,0,0,0.82)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, SIZE, SIZE);
-
-            // Nome popular — grande, canto inferior esquerdo
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold 72px 'Arial'`;
-            ctx.textBaseline = 'bottom';
-            ctx.textAlign = 'left';
-            const maxWidth = SIZE - 80;
-            // Quebra texto longo
-            const palavras = nomePopular.split(',')[0].trim().split(' ');
-            let linhas = [], linha = '';
-            for (const p of palavras) {
-                const teste = linha ? linha + ' ' + p : p;
-                if (ctx.measureText(teste).width > maxWidth) { linhas.push(linha); linha = p; }
-                else linha = teste;
-            }
-            linhas.push(linha);
-            const linhaHeight = 80;
-            const totalLinhas = linhas.length;
-
-            // Nome científico — menor, itálico
-            ctx.font = `italic 36px Arial`;
-            const sciWidth = ctx.measureText(nomeCientifico).width;
-
-            // Posições
-            const paddingBottom = 60;
-            const sciY = SIZE - paddingBottom;
-            const popY = sciY - 20 - (linhaHeight * totalLinhas);
-
-            // Sombra suave no texto
-            ctx.shadowColor = 'rgba(0,0,0,0.6)';
-            ctx.shadowBlur = 12;
-
-            // Desenha nome científico
-            ctx.font = `italic 38px Arial`;
-            ctx.fillStyle = 'rgba(255,255,255,0.80)';
-            ctx.fillText(nomeCientifico, 48, sciY);
-
-            // Desenha nome popular
-            ctx.font = `bold 68px Arial`;
-            ctx.fillStyle = '#ffffff';
-            linhas.forEach((l, i) => {
-                ctx.fillText(l, 48, popY + (i * linhaHeight));
-            });
-
-            // Logo PlantID discreto — canto superior direito
-            ctx.shadowBlur = 0;
-            ctx.font = 'bold 28px Arial';
-            ctx.fillStyle = 'rgba(255,255,255,0.55)';
-            ctx.textAlign = 'right';
-            ctx.fillText('🌿 plantid.com.br', SIZE - 36, 56);
-
-            // Exporta e compartilha
-            canvas.toBlob(blob => {
-                const file = new File([blob], 'plantid_identificacao.jpg', { type: 'image/jpeg' });
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    // Converte APENAS binômio (2 primeiras palavras) para Unicode itálico — autor fica normal
-                    const italicMap = {a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'𝘻',A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘥',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡'};
-                    const sciTokens = nomeCientifico.trim().split(' ');
-                    const binomio = sciTokens.slice(0,2).join(' ').split('').map(c => italicMap[c] || c).join('');
-                    const autor = sciTokens.slice(2).join(' ');
-                    const sciItalic = autor ? binomio + ' ' + autor : binomio;
-                    navigator.share({
-                        files: [file],
-                        title: nomePopular,
-                        text: `🌿 *${nomePopular}*\n${sciItalic}\n\n📍 Identificado com PlantID\n🔗 plantid.com.br`
-                    }).catch(() => {});
-                } else {
-                    // Fallback: download direto
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/jpeg', 0.92);
-                    a.download = `plantid_${nomePopular.replace(/\s/g,'_')}.jpg`;
-                    a.click();
-                }
-            }, 'image/jpeg', 0.92);
-        };
-        image.src = img.src;
-    }
-
-    function deletePlant(id) {
-        if (confirm("Remover esta planta do herbário?")) {
-            const tx = db.transaction("plants", "readwrite");
-            tx.objectStore("plants").delete(id);
-            tx.oncomplete = () => { closeModal(); renderHerb(); };
-        }
-    }
-
 
     /* ══════════════════════════════════════════
-       FIREBASE — Coleta anônima & Dataset
+       FIREBASE — Coleta anônima, Glossário & Dataset
     ══════════════════════════════════════════ */
     const FB_CONFIG = {
         apiKey: "AIzaSyBwyxvfmL8rVzj_pCB6WjIUtvjRS0H2Ig0",
@@ -1664,7 +1605,6 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         appId: "1:619440929372:web:fa6a7c27fb0bcb590c4499"
     };
 
-    // SDK Firebase via CDN (compat)
     async function loadFirebase() {
         if (window._fbLoaded) return;
         await Promise.all([
@@ -1694,7 +1634,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                         <option value="">Selecione seu estado...</option>
                         ${estados.map(e => `<option value="${e}">${e}</option>`).join('')}
                     </select>
-                    <button id="btn-confirmar-estado" style="width:100%;padding:14px;background:#1b5e20;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:0.5px;">Confirmar</button>
+                    <button id="btn-confirmar-estado" style="width:100%;padding:14px;background:#1b5e20;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;">Confirmar</button>
                     <p style="color:#aaa;font-size:0.72rem;margin-top:12px;line-height:1.4;">Apenas o estado é salvo, de forma anônima, para fins de pesquisa científica.</p>
                 </div>`;
             document.body.appendChild(overlay);
@@ -1708,38 +1648,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         });
     }
 
-    /* ── REGISTRAR IDENTIFICAÇÃO NO FIREBASE ── */
-    async function registrarIdentificacao(nomeCientifico, estado, imgBase64) {
-        try {
-            await loadFirebase();
-            const db = window._fbDB;
-            const agora = new Date();
-            await db.collection('identificacoes').add({
-                especie: nomeCientifico,
-                estado: estado,
-                mes: agora.getMonth() + 1,
-                ano: agora.getFullYear(),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                confirmada: null   // null = aguardando feedback do usuário
-            });
-        } catch(e) { console.warn('Firebase indisponível:', e.message); }
-    }
-
     /* ── SALVAR FEEDBACK DO USUÁRIO ── */
     async function salvarFeedback(docId, correto, imgBase64, nomeCientifico) {
         try {
             await loadFirebase();
             const db = window._fbDB;
-            const update = { confirmada: correto };
             if (correto && imgBase64) {
-                // Salva imagem no dataset de fotos confirmadas
                 await db.collection('dataset').add({
                     especie: nomeCientifico,
                     imagem: imgBase64,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
-            if (docId) await db.collection('identificacoes').doc(docId).update(update);
+            if (docId) await db.collection('identificacoes').doc(docId).update({ confirmada: correto });
         } catch(e) { console.warn('Feedback Firebase:', e.message); }
     }
 
@@ -1768,6 +1689,242 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         if (box) {
             box.innerHTML = `<p style="margin:0;font-size:0.9rem;color:#2e7d32;font-weight:600;">${correto ? '✅ Obrigado! Identificação confirmada.' : '❌ Obrigado! Vamos melhorar.'}</p>`;
             setTimeout(() => box.remove(), 3000);
+        }
+    }
+
+    /* ── DELETAR PLANTA ── */
+    function deletePlant(id) {
+        if (!confirm('Remover esta planta do herbário?')) return;
+        const tx = db.transaction("plants", "readwrite");
+        tx.objectStore("plants").delete(id);
+        tx.oncomplete = () => { closeModal(); renderHerb(); };
+    }
+
+    /* ── COMPARTILHAR IDENTIFICAÇÃO ── */
+    function compartilharPlanta() {
+        const img = document.getElementById('m-img');
+        const nomePopular = document.querySelector('.modal-plant-name')?.innerText || 'Planta Identificada';
+        const nomeCientifico = document.querySelector('.modal-plant-sci')?.innerText || '';
+
+        const canvas = document.createElement('canvas');
+        const SIZE = 1080;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            const ratio = image.width / image.height;
+            let sx = 0, sy = 0, sw = image.width, sh = image.height;
+            if (ratio > 1) { sw = image.height; sx = (image.width - sw) / 2; }
+            else { sh = image.width; sy = (image.height - sh) / 2; }
+            ctx.drawImage(image, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
+
+            const grad = ctx.createLinearGradient(0, SIZE * 0.45, 0, SIZE);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.82)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, SIZE, SIZE);
+
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 12;
+
+            ctx.font = 'italic 38px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.80)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(nomeCientifico, 48, SIZE - 60);
+
+            ctx.font = 'bold 68px Arial';
+            ctx.fillStyle = '#ffffff';
+            const maxWidth = SIZE - 80;
+            const palavras = nomePopular.split(',')[0].trim().split(' ');
+            let linhas = [], linha = '';
+            for (const p of palavras) {
+                const teste = linha ? linha + ' ' + p : p;
+                if (ctx.measureText(teste).width > maxWidth) { linhas.push(linha); linha = p; }
+                else linha = teste;
+            }
+            linhas.push(linha);
+            linhas.reverse().forEach((l, i) => {
+                ctx.fillText(l, 48, SIZE - 60 - 20 - 48 - i * 78);
+            });
+
+            ctx.shadowBlur = 0;
+            const logoImg = new Image();
+            logoImg.onload = () => {
+                const logoSize = 48;
+                const logoX = SIZE - 48 - logoSize;
+                const logoY = 24;
+                ctx.beginPath();
+                ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 5, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.30)';
+                ctx.fill();
+                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+                ctx.font = 'bold 28px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('PLANTID', logoX - 10, logoY + logoSize/2);
+
+                canvas.toBlob(blob => {
+                    const file = new File([blob], 'plantid.jpg', { type: 'image/jpeg' });
+                    const italicMap = {a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'𝘻',A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘑',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡'};
+                    const tokens = nomeCientifico.trim().split(' ');
+                    const binomio = tokens.slice(0,2).join(' ').split('').map(c => italicMap[c] || c).join('');
+                    const autor = tokens.slice(2).join(' ');
+                    const sciItalic = autor ? binomio + ' ' + autor : binomio;
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            files: [file],
+                            title: nomePopular,
+                            text: `🌿 *${nomePopular}*\n${sciItalic}\n\n📍 Identificado com PlantID\n🔗 plantid.com.br`
+                        }).catch(() => {});
+                    } else {
+                        const a = document.createElement('a');
+                        a.href = canvas.toDataURL('image/jpeg', 0.92);
+                        a.download = `plantid_${nomePopular.replace(/\s/g,'_')}.jpg`;
+                        a.click();
+                    }
+                }, 'image/jpeg', 0.92);
+            };
+            logoImg.src = 'data:image/png;base64,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';
+        };
+        image.src = img.src;
+    }
+
+
+    /* ── SISTEMA DE TOAST DE ERROS ── */
+    let _toastTimer = null;
+    let _countdownTimer = null;
+
+    function showToast(tipo, icone, titulo, mensagem, opcoes = {}) {
+        const toast = document.getElementById('plantid-toast');
+        const iconEl = document.getElementById('toast-icon');
+        const titleEl = document.getElementById('toast-title');
+        const msgEl = document.getElementById('toast-msg');
+        const countEl = document.getElementById('toast-countdown');
+
+        // Limpa timers anteriores
+        clearTimeout(_toastTimer);
+        clearInterval(_countdownTimer);
+
+        // Remove botão antigo se houver
+        const oldBtn = toast.querySelector('.toast-btn');
+        if (oldBtn) oldBtn.remove();
+
+        // Define tipo visual
+        toast.className = '';
+        if (tipo === 'warn') toast.classList.add('toast-warn');
+        else if (tipo === 'info') toast.classList.add('toast-info');
+
+        iconEl.textContent = icone;
+        titleEl.textContent = titulo;
+        msgEl.textContent = mensagem;
+        countEl.textContent = '';
+
+        // Countdown para High Demand
+        if (opcoes.countdown) {
+            let seg = opcoes.countdown;
+            countEl.textContent = `Tente novamente em ${seg}s`;
+            _countdownTimer = setInterval(() => {
+                seg--;
+                if (seg <= 0) {
+                    clearInterval(_countdownTimer);
+                    window._countdownAtivo = false;
+                    countEl.textContent = 'Você já pode tentar novamente!';
+                    document.getElementById('runBtn').disabled = false;
+                } else {
+                    countEl.textContent = `Tente novamente em ${seg}s`;
+                }
+            }, 1000);
+        }
+
+        // Botão fechar
+        if (opcoes.fechar !== false) {
+            const btn = document.createElement('button');
+            btn.className = 'toast-btn';
+            btn.textContent = 'Entendi';
+            btn.onclick = () => hideToast();
+            toast.appendChild(btn);
+        }
+
+        // Mostra o toast
+        toast.classList.add('toast-show');
+
+        // Auto-esconde (exceto se tiver countdown)
+        if (!opcoes.countdown) {
+            _toastTimer = setTimeout(() => hideToast(), opcoes.duracao || 5000);
+        }
+    }
+
+    function hideToast() {
+        const toast = document.getElementById('plantid-toast');
+        toast.classList.remove('toast-show');
+        clearTimeout(_toastTimer);
+        clearInterval(_countdownTimer);
+    }
+
+    function tratarErro(mensagemErro, btn) {
+        btn.disabled = false;
+        document.getElementById('status-ia').innerText = '';
+
+        const msg = mensagemErro || '';
+
+        // 503 — Servidor sobrecarregado / High demand
+        if (msg.includes('503') || msg.includes('high demand') || msg.includes('High demand') ||
+            msg.includes('overloaded') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
+            btn.disabled = true;
+            window._countdownAtivo = true;
+            showToast('warn', '🌿', 'Servidor sobrecarregado',
+                'O Gemini está com alta demanda no momento. Aguarde 10 segundos antes de tentar novamente.',
+                { countdown: 10 });
+
+        // 403 — Acesso negado / Chave inválida
+        } else if (msg.includes('403') || msg.includes('API key') || msg.includes('API Key') ||
+                   msg.includes('key not found') || msg.includes('key expired') || msg.includes('leaked') ||
+                   msg.includes('PERMISSION_DENIED')) {
+            showToast('', '🔑', 'Acesso negado',
+                'Problema de autenticação com o servidor. Tente novamente em instantes.',
+                { duracao: 7000 });
+
+        // 404 — Modelo não encontrado
+        } else if (msg.includes('404') || msg.includes('not found for API') || msg.includes('MODEL_NOT_FOUND')) {
+            showToast('', '🔍', 'Modelo não encontrado',
+                'O modelo de IA não foi localizado. Tente novamente em instantes.',
+                { duracao: 7000 });
+
+        // 400 — Requisição inválida / imagem com problema
+        } else if (msg.includes('400') || msg.includes('Bad Request') || msg.includes('INVALID_ARGUMENT') ||
+                   msg.includes('invalid') || msg.includes('payload')) {
+            showToast('', '🖼️', 'Imagem não processada',
+                'A imagem enviada não pôde ser processada. Tente com outra foto, com boa iluminação e foco na planta.',
+                { duracao: 7000 });
+
+        // Planta não identificada
+        } else if (msg.includes('INDEFINIDO') || msg.includes('não foi possível')) {
+            showToast('info', '🔍', 'Planta não identificada',
+                'Não foi possível identificar a espécie nessa imagem. Tente uma foto mais próxima, com boa iluminação e foco nas folhas ou flores.',
+                { duracao: 7000 });
+
+        // JSON malformado
+        } else if (msg.includes('JSON') || msg.includes('parse')) {
+            showToast('', '📋', 'Erro no relatório',
+                'O relatório não foi gerado corretamente. Tente novamente — geralmente funciona na segunda tentativa.',
+                { duracao: 6000 });
+
+        // Sem internet
+        } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network')) {
+            showToast('', '📡', 'Sem conexão',
+                'Verifique sua conexão com a internet e tente novamente.',
+                { duracao: 6000 });
+
+        // Genérico
+        } else {
+            showToast('', '⚠️', 'Algo deu errado',
+                'Ocorreu um erro inesperado. Tente novamente em alguns instantes.',
+                { duracao: 6000 });
         }
     }
 
@@ -1923,5 +2080,13 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     })();
 </script>
+    <!-- TOAST DE ERRO -->
+    <div id="plantid-toast">
+        <span class="toast-icon" id="toast-icon">⚠️</span>
+        <div class="toast-title" id="toast-title">Erro</div>
+        <div class="toast-msg" id="toast-msg"></div>
+        <div class="toast-countdown" id="toast-countdown"></div>
+    </div>
+
 </body>
 </html>

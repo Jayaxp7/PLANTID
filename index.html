@@ -155,64 +155,93 @@
         body.dark-mode {
             --primary: #81c784;
             --primary-dark: #4caf50;
-            --bg: #121212;
-            --bg-card: #1e1e1e;
-            --text-mid: #e0e0e0;
-            --text-soft: #9e9e9e;
-            --kraft: #1e1e1e;
-            --kraft-dark: #333333;
-            background: #121212;
-            color: #e0e0e0;
+            --bg: #1a1f1a;
+            --bg-card: #222722;
+            --text-mid: #e8f5e9;
+            --text-soft: #a5c8a7;
+            --kraft: #222722;
+            --kraft-dark: #2e3a2e;
+            background: #1a1f1a;
+            color: #e8f5e9;
         }
-        body.dark-mode nav {
-            background: #1b5e20;
-        }
+        body.dark-mode::before { opacity: 0.03; }
+        body.dark-mode nav { background: #1b5e20; }
+
+        /* Cards gerais */
         body.dark-mode .modal-card,
         body.dark-mode .upload-card,
         body.dark-mode .herb-card {
-            background: #1e1e1e;
-            border-color: #333;
+            background: #222722;
+            border-color: #2e3a2e;
         }
-        body.dark-mode .info-row {
-            border-bottom-color: #333;
-        }
-        body.dark-mode .info-value {
-            color: #e0e0e0;
-        }
-        body.dark-mode .herb-search {
-            background: #1e1e1e;
-            border-color: #333;
-            color: #e0e0e0;
-        }
-        body.dark-mode .herb-search::placeholder { color: #666; }
-        body.dark-mode .modal-header { background: #1b5e20; }
-        body.dark-mode .btn-close-modal {
-            background: #1e1e1e;
-            border-color: #444;
-            color: #e0e0e0;
-        }
-        body.dark-mode .info-section {
-            background: #242424;
-            border-color: #333;
-        }
-        body.dark-mode .info-section-header { border-bottom-color: #333; }
-        body.dark-mode #page-termos > div > div {
-            background: #1e1e1e;
-            border-color: #333;
-        }
+
+        /* Herbário — card selecionado legível */
+        body.dark-mode .herb-label { background: rgba(27,50,27,0.92); }
+        body.dark-mode .herb-label-name { color: #e8f5e9; }
+        body.dark-mode .herb-label-sci { color: #a5c8a7; }
+
+        /* Upload zone */
         body.dark-mode .upload-zone {
-            background: #1e1e1e;
-            border-color: #2e7d32;
+            background: #222722;
+            border-color: #3a5c3a;
         }
-        body.dark-mode .scan-btn { background: #2e7d32; }
+        body.dark-mode .upload-zone p,
+        body.dark-mode .upload-zone span,
+        body.dark-mode .upload-zone div { color: #a5c8a7 !important; }
+        body.dark-mode .scan-btn { background: #2e7d32; color: #fff; }
+
+        /* Modal */
+        body.dark-mode .modal-header { background: #1b5e20; }
+        body.dark-mode #detailModal { background: rgba(0,0,0,0.7); }
+        body.dark-mode .info-row { border-bottom-color: #2e3a2e; }
+        body.dark-mode .info-value { color: #e8f5e9; }
+        body.dark-mode .info-label { color: #a5c8a7; }
+        body.dark-mode .info-section {
+            background: #272d27;
+            border-color: #2e3a2e;
+        }
+        body.dark-mode .info-section-header { border-bottom-color: #2e3a2e; }
+        body.dark-mode .info-section-title { color: #81c784; }
+
+        /* Botões modal */
+        body.dark-mode .btn-close-modal {
+            background: #222722;
+            border-color: #3a5c3a;
+            color: #e8f5e9;
+        }
+
+        /* Busca herbário */
+        body.dark-mode .herb-search {
+            background: #222722;
+            border-color: #2e3a2e;
+            color: #e8f5e9;
+        }
+        body.dark-mode .herb-search::placeholder { color: #5a7a5a; }
+        body.dark-mode .herb-search-icon { color: #81c784; }
+
+        /* Textos gerais */
         body.dark-mode .hero-title { color: #81c784; }
         body.dark-mode .section-title { color: #81c784; }
-        body.dark-mode .section-sub { color: #666; }
+        body.dark-mode .section-sub { color: #5a7a5a; }
+        body.dark-mode .hero-tag { color: #5a7a5a; }
+        body.dark-mode .herb-noresult { color: #5a7a5a; }
+
+        /* Termos */
+        body.dark-mode #page-termos > div > div {
+            background: #222722;
+            border-color: #2e3a2e;
+        }
+        body.dark-mode #page-termos h3 { color: #81c784; }
+        body.dark-mode #page-termos p { color: #a5c8a7; }
+
+        /* Folhas do background */
         body.dark-mode #leaves-overlay svg path,
         body.dark-mode #leaves-overlay svg line,
         body.dark-mode #leaves-overlay svg ellipse,
-        body.dark-mode #leaves-overlay svg circle { fill: #81c784; stroke: #81c784; }
-        body.dark-mode .herb-noresult { color: #666; }
+        body.dark-mode #leaves-overlay svg circle { fill: #2e5c2e; stroke: #2e5c2e; }
+
+        /* Painel configs */
+        body.dark-mode #config-btn { background: #2e7d32; }
 
         /* ── PAINEL DE CONFIGURAÇÕES ── */
         #config-btn {
@@ -1224,7 +1253,7 @@
     <div class="nav-tabs">
         <button id="nav-analise" class="active" onclick="showPage('analise')">🔍 Scanner</button>
         <button id="nav-herbario" onclick="showPage('herbario')">🌿 Herbário</button>
-        <button id="nav-termos" onclick="showPage('termos')">📄 Termos</button>
+
     </div>
 </nav>
 

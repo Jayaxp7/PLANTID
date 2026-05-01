@@ -650,6 +650,66 @@
             cursor: pointer;
         }
 
+        /* ── BALÃO DO GLOSSÁRIO ── */
+        .glossario-balloon {
+            position: fixed;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 18px;
+            max-width: 280px;
+            width: calc(100vw - 40px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            z-index: 99999;
+            border-left: 4px solid var(--primary);
+            animation: balloonIn 0.2s ease;
+            pointer-events: auto;
+        }
+        body.dark-mode .glossario-balloon {
+            background: #222722;
+            border-color: #81c784;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        @keyframes balloonIn {
+            from { opacity: 0; transform: translateY(6px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .balloon-termo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        body.dark-mode .balloon-termo { color: #81c784; }
+        .balloon-cat {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--soft);
+            background: #f1f8e9;
+            padding: 2px 7px;
+            border-radius: 20px;
+        }
+        body.dark-mode .balloon-cat { background: #1a2e1a; color: #a5c8a7; }
+        .balloon-def {
+            font-size: 0.83rem;
+            color: #555;
+            line-height: 1.55;
+        }
+        body.dark-mode .balloon-def { color: #e8f5e9; }
+        .balloon-close {
+            position: absolute;
+            top: 8px; right: 10px;
+            background: none; border: none;
+            font-size: 1rem; cursor: pointer;
+            color: #aaa; line-height: 1;
+        }
+        .balloon-close:hover { color: #555; }
+
         /* ── HERB SEARCH ── */
         .herb-search-wrap {
             position: relative;
@@ -833,16 +893,72 @@
             cursor: pointer;
             transition: color 0.15s, border-color 0.15s;
             white-space: nowrap;
+            position: relative;
         }
-        .glossario-link:hover {
-            color: #2e7d32;
-            border-bottom-style: solid;
-        }
-        body.dark-mode .glossario-link {
-            color: #81c784;
-            border-bottom-color: #81c784;
-        }
+        .glossario-link:hover { color: #2e7d32; border-bottom-style: solid; }
+        body.dark-mode .glossario-link { color: #81c784; border-bottom-color: #81c784; }
         body.dark-mode .glossario-link:hover { color: #a5c8a7; }
+
+        /* ── POPUP DE DEFINIÇÃO ── */
+        #glossario-popup {
+            position: fixed;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 18px;
+            max-width: 300px;
+            width: calc(100vw - 48px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            z-index: 99999;
+            border-left: 4px solid var(--primary);
+            display: none;
+            animation: popupIn 0.18s ease;
+        }
+        body.dark-mode #glossario-popup {
+            background: #222722;
+            border-color: #81c784;
+        }
+        @keyframes popupIn {
+            from { opacity: 0; transform: translateY(6px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #glossario-popup-termo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        body.dark-mode #glossario-popup-termo { color: #81c784; }
+        #glossario-popup-cat {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--soft);
+            background: #f1f8e9;
+            padding: 2px 7px;
+            border-radius: 20px;
+        }
+        body.dark-mode #glossario-popup-cat { background: #1a2e1a; color: #a5c8a7; }
+        #glossario-popup-def {
+            font-size: 0.83rem;
+            color: var(--text-mid);
+            line-height: 1.55;
+        }
+        body.dark-mode #glossario-popup-def { color: #e8f5e9; }
+        #glossario-popup-fechar {
+            font-size: 0.75rem;
+            color: var(--primary);
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-block;
+            font-weight: 600;
+            text-decoration: underline dotted;
+        }
+        body.dark-mode #glossario-popup-fechar { color: #81c784; }
 
         /* ── HERB GRID ── */
         .section-title {
@@ -2175,32 +2291,62 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         infoValues.forEach(el => {
             if (el.querySelector('.glossario-link')) return; // já processado
             el.innerHTML = el.innerHTML.replace(regex, match =>
-                `<span class="glossario-link" onclick="abrirGlossarioTermo('${match}')">${match}</span>`
+                `<span class="glossario-link" onclick="abrirGlossarioTermo('${match}', event)">${match}</span>`
             );
         });
     }
 
-    function abrirGlossarioTermo(termo) {
-        closeModal();
-        showPage('glossario');
+    function abrirGlossarioTermo(termo, event) {
+        // Fecha balão anterior se existir
+        const old = document.getElementById('glossario-balloon');
+        if (old) { old.remove(); return; }
+
+        // Busca o termo no glossário
+        const entrada = window.GLOSSARIO && window.GLOSSARIO.find(g =>
+            g.termo.toLowerCase() === termo.toLowerCase()
+        );
+        if (!entrada) return;
+
+        // Cria o balão
+        const balloon = document.createElement('div');
+        balloon.className = 'glossario-balloon';
+        balloon.id = 'glossario-balloon';
+        balloon.innerHTML = `
+            <button class="balloon-close" onclick="document.getElementById('glossario-balloon')?.remove()">✕</button>
+            <div class="balloon-termo">
+                ${entrada.termo}
+                <span class="balloon-cat">${entrada.cat}</span>
+            </div>
+            <div class="balloon-def">${entrada.def}</div>
+        `;
+
+        // Posicionar perto do clique
+        document.body.appendChild(balloon);
+        const bw = balloon.offsetWidth;
+        const bh = balloon.offsetHeight;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const ex = event ? event.clientX : vw/2;
+        const ey = event ? event.clientY : vh/2;
+
+        let left = ex - bw/2;
+        let top = ey + 16;
+        if (left < 12) left = 12;
+        if (left + bw > vw - 12) left = vw - bw - 12;
+        if (top + bh > vh - 12) top = ey - bh - 12;
+
+        balloon.style.left = left + 'px';
+        balloon.style.top = top + 'px';
+
+        // Fechar ao clicar fora
         setTimeout(() => {
-            const input = document.getElementById('glossario-search');
-            if (input) {
-                input.value = termo;
-                filtrarGlossario(termo);
-                // Abrir automaticamente o item encontrado
-                setTimeout(() => {
-                    const items = document.querySelectorAll('.glossario-item');
-                    items.forEach(item => {
-                        const t = item.querySelector('.glossario-item-termo');
-                        if (t && t.childNodes[0].textContent.trim().toLowerCase() === termo.toLowerCase()) {
-                            item.classList.add('aberto');
-                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    });
-                }, 150);
-            }
-        }, 100);
+            document.addEventListener('click', function fecharBalloon(e) {
+                if (!balloon.contains(e.target)) {
+                    balloon.remove();
+                    document.removeEventListener('click', fecharBalloon);
+                }
+            });
+        }, 50);
     }
 
     function closeModal() {

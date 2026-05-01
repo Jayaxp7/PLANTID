@@ -3,6 +3,24 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // Proteção de origem — só aceita chamadas do próprio domínio
+    const origin = req.headers.origin || '';
+    const referer = req.headers.referer || '';
+    const allowed = [
+        'https://plantid.com.br',
+        'https://www.plantid.com.br',
+        'https://plantid-alpha.vercel.app',
+    ];
+
+    const originOk = allowed.some(a => origin.startsWith(a) || referer.startsWith(a));
+
+    // Em desenvolvimento local (sem origin) também permite
+    const isLocal = !origin && !referer;
+
+    if (!originOk && !isLocal) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) {
         return res.status(500).json({ error: 'Chave não configurada' });

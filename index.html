@@ -279,6 +279,65 @@
         body.dark-mode .config-label { color: #e8f5e9; }
         body.dark-mode .config-row { border-bottom-color: #2e3a2e; }
 
+        /* ── LOGIN GOOGLE ── */
+        .login-google-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border: 1.5px solid #c8e6c9;
+            border-radius: 12px;
+            padding: 11px 18px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-mid);
+            cursor: pointer;
+            width: 100%;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            margin-bottom: 8px;
+        }
+        .login-google-btn:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-color: var(--primary);
+        }
+        body.dark-mode .login-google-btn {
+            background: #2a332a;
+            border-color: #3a5c3a;
+            color: #e8f5e9;
+        }
+        .user-info-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0 4px;
+        }
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #c8e6c9;
+        }
+        .user-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        body.dark-mode .user-name { color: #81c784; }
+        .logout-link {
+            font-size: 0.72rem;
+            color: #c62828;
+            cursor: pointer;
+            text-decoration: underline dotted;
+            background: none;
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+
         /* ── PAINEL DE CONFIGURAÇÕES ── */
         #config-btn {
             position: fixed;
@@ -1968,6 +2027,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 openModal(plant);
                 window._currentFeedbackImg = plant.img || null;
                 renderFeedback(plant.nome_cientifico, plant.img, fbDocId);
+                sincronizarPlantaIndividual(plant);
             };
 
             addTx.onerror = () => {
@@ -2370,10 +2430,12 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         if (window._fbLoaded) return;
         await Promise.all([
             new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js'; s.onload=r; document.head.appendChild(s); }),
-            new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js'; s.onload=r; document.head.appendChild(s); })
+            new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js'; s.onload=r; document.head.appendChild(s); }),
+            new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js'; s.onload=r; document.head.appendChild(s); })
         ]);
         firebase.initializeApp(FB_CONFIG);
         window._fbDB = firebase.firestore();
+        window._fbAuth = firebase.auth();
         window._fbLoaded = true;
     }
 
@@ -2693,6 +2755,109 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     }
 
+    /* ── LOGIN GOOGLE & HERBÁRIO NA NUVEM ── */
+    window._currentUser = null;
+
+    async function loginGoogle() {
+        try {
+            await loadFirebase();
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await window._fbAuth.signInWithPopup(provider);
+            window._currentUser = result.user;
+            atualizarUILogin(result.user);
+            sincronizarHerbario(result.user.uid);
+        } catch(e) {
+            console.warn('Login erro:', e.message);
+            if (e.code !== 'auth/popup-closed-by-user') {
+                showToast('', '⚠️', 'Erro no login', 'Não foi possível entrar com Google. Tente novamente.', { duracao: 5000 });
+            }
+        }
+    }
+
+    async function logoutGoogle() {
+        try {
+            await window._fbAuth.signOut();
+            window._currentUser = null;
+            atualizarUILogin(null);
+        } catch(e) { console.warn('Logout erro:', e.message); }
+    }
+
+    function atualizarUILogin(user) {
+        const loginArea = document.getElementById('config-login-area');
+        const userArea = document.getElementById('config-user-area');
+        if (!loginArea || !userArea) return;
+        if (user) {
+            loginArea.style.display = 'none';
+            userArea.style.display = 'block';
+            const avatar = document.getElementById('user-avatar');
+            const name = document.getElementById('user-name');
+            if (avatar) avatar.src = user.photoURL || '';
+            if (name) name.textContent = user.displayName || user.email;
+        } else {
+            loginArea.style.display = 'block';
+            userArea.style.display = 'none';
+        }
+    }
+
+    async function sincronizarHerbario(uid) {
+        try {
+            // Pega plantas do IndexedDB local
+            const tx = db.transaction("plants", "readonly");
+            const plantas = await new Promise(res => {
+                const req = tx.objectStore("plants").getAll();
+                req.onsuccess = () => res(req.result);
+            });
+
+            if (!plantas.length) return;
+
+            await loadFirebase();
+            const fbDB = window._fbDB;
+            const batch = fbDB.batch();
+            let count = 0;
+
+            plantas.forEach(p => {
+                // Salva tudo EXCETO a foto
+                const { img, ...dadosSemFoto } = p;
+                const ref = fbDB.collection('herbariosUsers').doc(uid).collection('plantas').doc(String(p.id));
+                batch.set(ref, { ...dadosSemFoto, syncAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                count++;
+            });
+
+            await batch.commit();
+            showToast('info', '☁️', 'Herbário sincronizado!',
+                `${count} planta${count>1?'s':''} salva${count>1?'s':''} na nuvem com sucesso.`,
+                { duracao: 4000 });
+        } catch(e) {
+            console.warn('Sync herbário:', e.message);
+        }
+    }
+
+    // Verificar login ao carregar
+    async function verificarLoginSalvo() {
+        try {
+            await loadFirebase();
+            window._fbAuth.onAuthStateChanged(user => {
+                if (user) {
+                    window._currentUser = user;
+                    atualizarUILogin(user);
+                }
+            });
+        } catch(e) {}
+    }
+
+    // Sincronizar planta individual ao identificar
+    async function sincronizarPlantaIndividual(planta) {
+        if (!window._currentUser) return;
+        try {
+            const { img, ...dadosSemFoto } = planta;
+            await window._fbDB.collection('herbariosUsers')
+                .doc(window._currentUser.uid)
+                .collection('plantas')
+                .doc(String(planta.id))
+                .set({ ...dadosSemFoto, syncAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        } catch(e) { console.warn('Sync planta:', e.message); }
+    }
+
     /* ── CONFIGURAÇÕES & DARK MODE ── */
     function toggleConfigPanel() {
         const btn = document.getElementById('config-btn');
@@ -2735,6 +2900,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 if (toggle) toggle.checked = true;
             });
         }
+        // Verificar login salvo
+        verificarLoginSalvo();
     })();
 
     /* ══════════════════════════════════════════
@@ -3045,6 +3212,23 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     <!-- PAINEL DE CONFIGURAÇÕES -->
     <div id="config-panel">
+        <div class="config-row" id="config-login-row">
+            <span class="config-label">☁️ Herbário na nuvem</span>
+        </div>
+        <div id="config-login-area" style="padding:4px 0 8px;">
+            <button class="login-google-btn" onclick="loginGoogle()">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Entrar com Google
+            </button>
+        </div>
+        <div id="config-user-area" style="display:none;padding:4px 0 8px;">
+            <div class="user-info-wrap">
+                <img class="user-avatar" id="user-avatar" src="" alt="">
+                <span class="user-name" id="user-name"></span>
+                <button class="logout-link" onclick="logoutGoogle()">Sair</button>
+            </div>
+            <div style="font-size:0.72rem;color:#888;margin-top:4px;">Herbário sincronizado ☁️</div>
+        </div>
         <div class="config-row">
             <span class="config-label">🌙 Modo Escuro</span>
             <label class="toggle-wrap">

@@ -207,6 +207,19 @@
         body.dark-mode .modal-plant-name { color: #fff; }
         body.dark-mode .modal-plant-sci { color: rgba(255,255,255,0.75); }
 
+        /* Info boxes dentro do modal */
+        body.dark-mode .info-box {
+            background: #2a332a !important;
+            border-color: #3a5c3a;
+        }
+        body.dark-mode .info-box.warn { border-left-color: #ffb74d; }
+        body.dark-mode .info-box.eco { background: #252d1e !important; border-left-color: #aaa22e; }
+        body.dark-mode .info-box.danger { border-left-color: #ef5350; }
+        body.dark-mode .icon-morfo { background: #1b3a1e; }
+        body.dark-mode .icon-cultivo { background: #2a2810; }
+        body.dark-mode .icon-fito { background: #2e1820; }
+        body.dark-mode .icon-eco { background: #251a2e; }
+
         /* Botões modal */
         body.dark-mode .btn-close-modal {
             background: #2a332a;
@@ -2433,7 +2446,6 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     <!-- PAINEL DE CONFIGURAÇÕES -->
     <div id="config-panel">
-        <div class="config-title">⚙️ Configurações</div>
         <div class="config-row">
             <span class="config-label">🌙 Modo Escuro</span>
             <label class="toggle-wrap">

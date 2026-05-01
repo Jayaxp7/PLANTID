@@ -167,18 +167,16 @@
         body.dark-mode::before { opacity: 0.03; }
         body.dark-mode nav { background: #1b5e20; }
 
-        /* Cards gerais */
-        body.dark-mode .modal-card,
-        body.dark-mode .upload-card,
+        /* Herbário — card fundo escuro completo */
         body.dark-mode .herb-card {
-            background: #222722;
+            background: #222722 !important;
             border-color: #2e3a2e;
         }
-
-        /* Herbário — card selecionado legível */
-        body.dark-mode .herb-label { background: rgba(27,50,27,0.92); }
-        body.dark-mode .herb-label-name { color: #e8f5e9; }
-        body.dark-mode .herb-label-sci { color: #a5c8a7; }
+        body.dark-mode .herb-label {
+            background: #222722 !important;
+        }
+        body.dark-mode .herb-label-name { color: #e8f5e9 !important; }
+        body.dark-mode .herb-label-sci { color: #a5c8a7 !important; }
 
         /* Upload zone */
         body.dark-mode .upload-zone {
@@ -190,22 +188,28 @@
         body.dark-mode .upload-zone div { color: #a5c8a7 !important; }
         body.dark-mode .scan-btn { background: #2e7d32; color: #fff; }
 
-        /* Modal */
-        body.dark-mode .modal-header { background: #1b5e20; }
-        body.dark-mode #detailModal { background: rgba(0,0,0,0.7); }
+        /* Modal — fundo e textos */
+        body.dark-mode .modal-content {
+            background: #222722 !important;
+            border-color: #2e3a2e;
+        }
+        body.dark-mode .modal-body { background: #222722; }
+        body.dark-mode #detailModal { background: rgba(0,0,0,0.75); }
         body.dark-mode .info-row { border-bottom-color: #2e3a2e; }
-        body.dark-mode .info-value { color: #e8f5e9; }
-        body.dark-mode .info-label { color: #a5c8a7; }
+        body.dark-mode .info-value { color: #e8f5e9 !important; }
+        body.dark-mode .info-label { color: #a5c8a7 !important; }
         body.dark-mode .info-section {
-            background: #272d27;
+            background: #272d27 !important;
             border-color: #2e3a2e;
         }
         body.dark-mode .info-section-header { border-bottom-color: #2e3a2e; }
-        body.dark-mode .info-section-title { color: #81c784; }
+        body.dark-mode .info-section-title { color: #81c784 !important; }
+        body.dark-mode .modal-plant-name { color: #fff; }
+        body.dark-mode .modal-plant-sci { color: rgba(255,255,255,0.75); }
 
         /* Botões modal */
         body.dark-mode .btn-close-modal {
-            background: #222722;
+            background: #2a332a;
             border-color: #3a5c3a;
             color: #e8f5e9;
         }
@@ -242,6 +246,13 @@
 
         /* Painel configs */
         body.dark-mode #config-btn { background: #2e7d32; }
+        body.dark-mode #config-panel {
+            background: #222722;
+            border: 1px solid #2e3a2e;
+        }
+        body.dark-mode .config-title { color: #81c784; }
+        body.dark-mode .config-label { color: #e8f5e9; }
+        body.dark-mode .config-row { border-bottom-color: #2e3a2e; }
 
         /* ── PAINEL DE CONFIGURAÇÕES ── */
         #config-btn {

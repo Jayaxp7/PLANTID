@@ -826,6 +826,24 @@
         body.dark-mode .glossario-item-def { color: #e8f5e9; }
         body.dark-mode .glossario-noresult { color: #5a7a5a; }
 
+        /* ── PALAVRAS DO GLOSSÁRIO ── */
+        .glossario-link {
+            color: var(--primary);
+            border-bottom: 1.5px dotted var(--primary);
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .glossario-link:hover {
+            color: #2e7d32;
+            border-bottom-style: solid;
+        }
+        body.dark-mode .glossario-link {
+            color: #81c784;
+            border-bottom-color: #81c784;
+        }
+        body.dark-mode .glossario-link:hover { color: #a5c8a7; }
+
         /* ── HERB GRID ── */
         .section-title {
             font-family: 'Cormorant Garamond', serif;
@@ -2061,6 +2079,48 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         `;
 
         document.getElementById('detailModal').style.display = 'flex';
+        // Destacar termos do glossário nas info-values
+        destacarTermosGlossario();
+    }
+
+    function destacarTermosGlossario() {
+        if (!window.GLOSSARIO || !window.GLOSSARIO.length) return;
+        // Monta regex com todos os termos — palavra exata, case-insensitive
+        const termos = window.window.GLOSSARIO.map(g => g.termo);
+        const regex = new RegExp(
+            '\\b(' + termos.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
+            'gi'
+        );
+        const infoValues = document.querySelectorAll('#m-body .info-value');
+        infoValues.forEach(el => {
+            if (el.querySelector('.glossario-link')) return; // já processado
+            el.innerHTML = el.innerHTML.replace(regex, match =>
+                `<span class="glossario-link" onclick="abrirGlossarioTermo('${match}')">${match}</span>`
+            );
+        });
+    }
+
+    function abrirGlossarioTermo(termo) {
+        closeModal();
+        showPage('glossario');
+        setTimeout(() => {
+            const input = document.getElementById('glossario-search');
+            if (input) {
+                input.value = termo;
+                filtrarGlossario(termo);
+                // Abrir automaticamente o item encontrado
+                setTimeout(() => {
+                    const items = document.querySelectorAll('.glossario-item');
+                    items.forEach(item => {
+                        const t = item.querySelector('.glossario-item-termo');
+                        if (t && t.childNodes[0].textContent.trim().toLowerCase() === termo.toLowerCase()) {
+                            item.classList.add('aberto');
+                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }, 150);
+            }
+        }, 100);
     }
 
     function closeModal() {
@@ -2450,7 +2510,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     /* ══════════════════════════════════════════
        GLOSSÁRIO BOTÂNICO
     ══════════════════════════════════════════ */
-    const GLOSSARIO = [
+    window.GLOSSARIO = [
         // MORFOLOGIA
         { termo: "Acúleo", cat: "Morfologia", def: "Projeção superficial do tecido da epiderme ou córtex do caule, sem conexão com tecidos vasculares. Diferencia-se do espinho por ser facilmente removido. Exemplo: os acúleos das roseiras." },
         { termo: "Antese", cat: "Reprodução", def: "Período de abertura e maturidade da flor, quando esta está apta para a polinização. Corresponde ao momento em que as anteras liberam o pólen e o estigma está receptivo." },
@@ -2527,16 +2587,16 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     ];
 
     // Ordenar alfabeticamente
-    GLOSSARIO.sort((a, b) => a.termo.localeCompare(b.termo, 'pt'));
+    window.GLOSSARIO.sort((a, b) => a.termo.localeCompare(b.termo, 'pt'));
 
     function iniciarGlossario() {
-        const letrasUnicas = [...new Set(GLOSSARIO.map(g => g.termo[0].toUpperCase()))].sort();
+        const letrasUnicas = [...new Set(window.GLOSSARIO.map(g => g.termo[0].toUpperCase()))].sort();
         const letrasEl = document.getElementById('glossario-letras');
         if (!letrasEl) return;
         letrasEl.innerHTML = letrasUnicas.map(l =>
             `<button class="glossario-letra-btn" onclick="filtrarLetra('${l}')">${l}</button>`
         ).join('');
-        renderGlossario(GLOSSARIO);
+        renderGlossario(window.GLOSSARIO);
     }
 
     function renderGlossario(lista) {
@@ -2581,9 +2641,9 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     function filtrarGlossario(termo) {
         // Limpar filtro de letra ativa
         document.querySelectorAll('.glossario-letra-btn').forEach(b => b.classList.remove('ativa'));
-        if (!termo.trim()) { renderGlossario(GLOSSARIO); return; }
+        if (!termo.trim()) { renderGlossario(window.GLOSSARIO); return; }
         const t = termo.toLowerCase();
-        renderGlossario(GLOSSARIO.filter(g =>
+        renderGlossario(window.GLOSSARIO.filter(g =>
             g.termo.toLowerCase().includes(t) ||
             g.def.toLowerCase().includes(t) ||
             g.cat.toLowerCase().includes(t)
@@ -2595,7 +2655,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         document.querySelectorAll('.glossario-letra-btn').forEach(b => {
             b.classList.toggle('ativa', b.textContent === letra);
         });
-        renderGlossario(GLOSSARIO.filter(g => g.termo[0].toUpperCase() === letra));
+        renderGlossario(window.GLOSSARIO.filter(g => g.termo[0].toUpperCase() === letra));
     }
 
     /* ── FLOATING LEAVES ENGINE ── */

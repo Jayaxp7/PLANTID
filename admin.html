@@ -4,388 +4,234 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PlantID — Painel Admin</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-function iniciarMapa(dados, porEstado) {
-    const paths = document.querySelectorAll('#mapa-brasil path');
-    const tooltip = document.getElementById('mapa-tooltip');
-
-    // Colorir estados com dados
-    paths.forEach(path => {
-        const uf = path.dataset.uf;
-        if (!porEstado[uf]) {
-            path.classList.add('sem-dado');
-        }
-    });
-
-    // Construir dados por estado
-    const dadosPorEstado = {};
-    dados.forEach(d => {
-        if (!d.estado) return;
-        if (!dadosPorEstado[d.estado]) {
-            dadosPorEstado[d.estado] = {
-                total: 0, corretas: 0, incorretas: 0, pendentes: 0,
-                especies: {}, ultimaData: null
-            };
-        }
-        const e = dadosPorEstado[d.estado];
-        e.total++;
-        if (d.confirmada === true) e.corretas++;
-        else if (d.confirmada === false) e.incorretas++;
-        else e.pendentes++;
-        if (d.especie) e.especies[d.especie] = (e.especies[d.especie]||0)+1;
-        if (d.timestamp?.toDate) {
-            const dt = d.timestamp.toDate();
-            if (!e.ultimaData || dt > e.ultimaData) e.ultimaData = dt;
-        }
-    });
-
-    paths.forEach(path => {
-        const uf = path.dataset.uf;
-        const nome = path.dataset.nome;
-        const e = dadosPorEstado[uf];
-
-        path.addEventListener('mouseenter', ev => {
-            // Highlight
-            paths.forEach(p => p.classList.remove('ativo'));
-            path.classList.add('ativo');
-
-            if (!e) {
-                tooltip.innerHTML = `<div class="mapa-tooltip-titulo">${nome} (${uf})</div><div class="mapa-tooltip-linha">Nenhuma identificação ainda</div>`;
-            } else {
-                const topEspecies = Object.entries(e.especies).sort((a,b)=>b[1]-a[1]).slice(0,3);
-                const taxa = e.corretas + e.incorretas > 0
-                    ? ((e.corretas/(e.corretas+e.incorretas))*100).toFixed(0)+'%' : '—';
-                const ultima = e.ultimaData ? e.ultimaData.toLocaleDateString('pt-BR') : '—';
-                tooltip.innerHTML = `
-                    <div class="mapa-tooltip-titulo">📍 ${nome} (${uf})</div>
-                    <div class="mapa-tooltip-linha"><span>Total de identificações</span><span class="mapa-tooltip-val">${e.total}</span></div>
-                    <div class="mapa-tooltip-linha"><span>✅ Corretas</span><span class="mapa-tooltip-val">${e.corretas}</span></div>
-                    <div class="mapa-tooltip-linha"><span>❌ Incorretas</span><span class="mapa-tooltip-val">${e.incorretas}</span></div>
-                    <div class="mapa-tooltip-linha"><span>⏳ Pendentes</span><span class="mapa-tooltip-val">${e.pendentes}</span></div>
-                    <div class="mapa-tooltip-linha"><span>🎯 Taxa de acerto</span><span class="mapa-tooltip-val">${taxa}</span></div>
-                    <div class="mapa-tooltip-linha"><span>🌿 Espécies únicas</span><span class="mapa-tooltip-val">${Object.keys(e.especies).length}</span></div>
-                    ${topEspecies.length ? `<div class="mapa-tooltip-linha" style="margin-top:8px;"><span>Top espécies:</span></div>
-                    ${topEspecies.map(([esp,n]) => `<div class="mapa-tooltip-linha"><span><em>${esp.split(' ').slice(0,2).join(' ')}</em></span><span class="mapa-tooltip-val">${n}x</span></div>`).join('')}` : ''}
-                    <div class="mapa-tooltip-linha" style="margin-top:6px;color:#aaa;font-size:0.75rem;"><span>Última identificação:</span><span>${ultima}</span></div>
-                `;
-            }
-            tooltip.style.display = 'block';
-        });
-
-        path.addEventListener('mousemove', ev => {
-            const x = ev.clientX + 16;
-            const y = ev.clientY - 10;
-            const tw = tooltip.offsetWidth;
-            const th = tooltip.offsetHeight;
-            tooltip.style.left = (x + tw > window.innerWidth ? ev.clientX - tw - 10 : x) + 'px';
-            tooltip.style.top = (y + th > window.innerHeight ? ev.clientY - th - 10 : y) + 'px';
-        });
-
-        path.addEventListener('mouseleave', () => {
-            tooltip.style.display = 'none';
-            path.classList.remove('ativo');
-        });
-    });
-}
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --primary: #1b5e20;
-        --primary-light: #81c784;
-        --bg: #f5f0e8;
-        --card: #fff;
-        --text: #2c3e2d;
-        --soft: #6a8a6b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+:root { --primary:#1b5e20; --primary-light:#81c784; --bg:#f5f0e8; --card:#fff; --text:#2c3e2d; --soft:#6a8a6b; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:#fff;border-radius:24px;padding:48px 40px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.12);text-align:center;}
+.login-logo{font-size:56px;margin-bottom:12px;}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--primary);margin-bottom:4px;}
+.login-sub{color:var(--soft);font-size:0.85rem;margin-bottom:32px;}
+.login-input{width:100%;padding:14px 18px;border:1.5px solid #c8e6c9;border-radius:12px;font-size:1rem;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;margin-bottom:14px;color:var(--text);}
+.login-input:focus{border-color:var(--primary);}
+.login-btn{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.login-btn:hover{background:#2e7d32;}
+.login-erro{color:#c62828;font-size:.82rem;margin-top:10px;display:none;}
+#painel{display:none;}
+.admin-nav{background:var(--primary);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(0,0,0,.2);position:sticky;top:0;z-index:100;}
+.admin-nav-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#fff;font-weight:700;}
+.admin-nav-sub{font-size:.72rem;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;}
+.logout-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:7px 16px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.logout-btn:hover{background:rgba(255,255,255,.25);}
+.admin-body{max-width:1100px;margin:0 auto;padding:32px 20px 60px;}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;}
+.metric-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);border-left:4px solid var(--primary);}
+.metric-label{font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--soft);margin-bottom:8px;}
+.metric-value{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:700;color:var(--primary);line-height:1;}
+.metric-sub{font-size:.78rem;color:var(--soft);margin-top:6px;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px;}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);}
+.chart-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:20px;}
+.chart-wrap{position:relative;height:260px;}
+.table-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);margin-bottom:32px;overflow-x:auto;}
+.table-card table{width:100%;border-collapse:collapse;font-size:.88rem;}
+.table-card th{text-align:left;padding:10px 14px;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--soft);border-bottom:2px solid #e8f5e9;}
+.table-card td{padding:12px 14px;border-bottom:1px solid #f1f8e9;color:var(--text);}
+.table-card tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:600;}
+.badge-sim{background:#e8f5e9;color:#2e7d32;}
+.badge-nao{background:#fce4ec;color:#c62828;}
+.badge-pend{background:#fff8e1;color:#e65100;}
+.loading{text-align:center;padding:60px 20px;color:var(--soft);}
+.loading-spinner{font-size:2rem;animation:spin 1s linear infinite;display:block;margin-bottom:12px;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.estado-badge{display:inline-block;background:#e8f5e9;color:var(--primary);padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:600;}
 
-    /* LOGIN */
-    #login-screen {
-        display: flex; align-items: center; justify-content: center;
-        min-height: 100vh; padding: 20px;
-    }
-    .login-card {
-        background: #fff; border-radius: 24px; padding: 48px 40px;
-        max-width: 380px; width: 100%;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.12);
-        text-align: center;
-    }
-    .login-logo { font-size: 56px; margin-bottom: 12px; }
-    .login-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--primary); margin-bottom: 4px; }
-    .login-sub { color: var(--soft); font-size: 0.85rem; margin-bottom: 32px; }
-    .login-input {
-        width: 100%; padding: 14px 18px; border: 1.5px solid #c8e6c9;
-        border-radius: 12px; font-size: 1rem; font-family: 'DM Sans', sans-serif;
-        outline: none; transition: border 0.2s;
-        margin-bottom: 14px; color: var(--text);
-    }
-    .login-input:focus { border-color: var(--primary); }
-    .login-btn {
-        width: 100%; padding: 14px; background: var(--primary); color: #fff;
-        border: none; border-radius: 12px; font-size: 1rem; font-weight: 600;
-        cursor: pointer; font-family: 'DM Sans', sans-serif;
-        transition: background 0.2s;
-    }
-    .login-btn:hover { background: #2e7d32; }
-    .login-erro { color: #c62828; font-size: 0.82rem; margin-top: 10px; display: none; }
-
-    /* PAINEL */
-    #painel { display: none; }
-    .admin-nav {
-        background: var(--primary); padding: 0 28px; height: 60px;
-        display: flex; align-items: center; justify-content: space-between;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        position: sticky; top: 0; z-index: 100;
-    }
-    .admin-nav-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: #fff; font-weight: 700; }
-    .admin-nav-sub { font-size: 0.72rem; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
-    .logout-btn {
-        background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);
-        padding: 7px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
-        font-family: 'DM Sans', sans-serif; transition: background 0.2s;
-    }
-    .logout-btn:hover { background: rgba(255,255,255,0.25); }
-
-    .admin-body { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; }
-
-    /* CARDS DE MÉTRICAS */
-    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .metric-card {
-        background: var(--card); border-radius: 18px; padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(165,214,167,0.2);
-        border-left: 4px solid var(--primary);
-    }
-    .metric-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--soft); margin-bottom: 8px; }
-    .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; font-weight: 700; color: var(--primary); line-height: 1; }
-    .metric-sub { font-size: 0.78rem; color: var(--soft); margin-top: 6px; }
-
-    /* GRÁFICOS */
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
-    @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
-    .chart-card {
-        background: var(--card); border-radius: 18px; padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(165,214,167,0.2);
-    }
-    .chart-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; }
-    .chart-wrap { position: relative; height: 260px; }
-
-    /* TABELA ÚLTIMAS IDENTIFICAÇÕES */
-    .table-card {
-        background: var(--card); border-radius: 18px; padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(165,214,167,0.2);
-        margin-bottom: 32px; overflow-x: auto;
-    }
-    .table-card table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    .table-card th { text-align: left; padding: 10px 14px; font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--soft); border-bottom: 2px solid #e8f5e9; }
-    .table-card td { padding: 12px 14px; border-bottom: 1px solid #f1f8e9; color: var(--text); }
-    .table-card tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
-    .badge-sim { background: #e8f5e9; color: #2e7d32; }
-    .badge-nao { background: #fce4ec; color: #c62828; }
-    .badge-pend { background: #fff8e1; color: #e65100; }
-
-    /* LOADING */
-    .loading { text-align: center; padding: 60px 20px; color: var(--soft); }
-    .loading-spinner { font-size: 2rem; animation: spin 1s linear infinite; display: block; margin-bottom: 12px; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-    /* ESTADO */
-    .estado-badge { display: inline-block; background: #e8f5e9; color: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
-
-    /* MAPA */
-    .mapa-card {
-        background: var(--card); border-radius: 18px; padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(165,214,167,0.2);
-        margin-bottom: 32px;
-    }
-    #mapa-brasil { width: 100%; max-width: 700px; display: block; margin: 0 auto; cursor: pointer; }
-    #mapa-brasil path {
-        fill: #c8e6c9; stroke: #fff; stroke-width: 1.5;
-        transition: fill 0.2s; cursor: pointer;
-    }
-    #mapa-brasil path:hover { fill: #1b5e20; }
-    #mapa-brasil path.ativo { fill: #2e7d32; }
-    #mapa-brasil path.sem-dado { fill: #e0e0e0; }
-    .mapa-tooltip {
-        position: fixed; background: #fff; border-radius: 14px;
-        padding: 16px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-        pointer-events: none; z-index: 9999; display: none;
-        border-left: 4px solid #1b5e20; min-width: 220px;
-        font-family: 'DM Sans', sans-serif;
-    }
-    .mapa-tooltip-titulo { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 700; color: #1b5e20; margin-bottom: 10px; }
-    .mapa-tooltip-linha { font-size: 0.82rem; color: #555; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 16px; }
-    .mapa-tooltip-val { font-weight: 600; color: #1b5e20; }
-    .mapa-legenda { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 0.78rem; color: #888; justify-content: center; }
-    .mapa-legenda-cor { width: 12px; height: 12px; border-radius: 3px; }
-
+/* MAPA */
+.mapa-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);margin-bottom:32px;}
+.mapa-wrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;}
+.mapa-svg-wrap{flex:1;min-width:280px;}
+#mapa-brasil{width:100%;cursor:pointer;}
+#mapa-brasil .estado{fill:#c8e6c9;stroke:#fff;stroke-width:1;transition:fill .2s;cursor:pointer;}
+#mapa-brasil .estado:hover{fill:#2e7d32;stroke:#fff;}
+#mapa-brasil .estado.sem-dado{fill:#e0e0e0;}
+#mapa-brasil .estado.selecionado{fill:#1b5e20;}
+.mapa-info{flex:0 0 280px;background:#f9fbe7;border-radius:14px;padding:20px;border:1px solid #c8e6c9;min-height:200px;}
+.mapa-info-vazio{color:var(--soft);font-size:.85rem;text-align:center;padding:40px 0;}
+.mapa-info-titulo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #c8e6c9;}
+.mapa-info-linha{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:.84rem;color:var(--text);border-bottom:1px solid #e8f5e9;}
+.mapa-info-linha:last-child{border-bottom:none;}
+.mapa-info-val{font-weight:700;color:var(--primary);}
+.mapa-legenda{display:flex;gap:16px;margin-top:14px;font-size:.75rem;color:#888;flex-wrap:wrap;}
+.mapa-leg-item{display:flex;align-items:center;gap:5px;}
+.mapa-leg-cor{width:14px;height:14px;border-radius:3px;}
 </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
 <div id="login-screen">
-    <div class="login-card">
-        <div class="login-logo">🌿</div>
-        <div class="login-title">PlantID Admin</div>
-        <div class="login-sub">PAINEL DE DADOS · ACESSO RESTRITO</div>
-        <input type="password" id="senha-input" class="login-input" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter') fazerLogin()">
-        <button class="login-btn" onclick="fazerLogin()">Entrar</button>
-        <div class="login-erro" id="login-erro">Senha incorreta. Tente novamente.</div>
-    </div>
+  <div class="login-card">
+    <div class="login-logo">🌿</div>
+    <div class="login-title">PlantID Admin</div>
+    <div class="login-sub">PAINEL DE DADOS · ACESSO RESTRITO</div>
+    <input type="password" id="senha-input" class="login-input" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="login-erro" id="login-erro">Senha incorreta. Tente novamente.</div>
+  </div>
 </div>
 
-<!-- TOOLTIP MAPA -->
-<div class="mapa-tooltip" id="mapa-tooltip"></div>
-
-<!-- PAINEL -->
 <div id="painel">
-    <nav class="admin-nav">
-        <div>
-            <div class="admin-nav-title">🌿 PlantID Admin</div>
-            <div class="admin-nav-sub">Painel de Dados em Tempo Real</div>
-        </div>
-        <button class="logout-btn" onclick="fazerLogout()">Sair</button>
-    </nav>
-
-    <div class="admin-body">
-        <div id="loading" class="loading">
-            <span class="loading-spinner">⚙️</span>
-            Carregando dados do Firebase...
-        </div>
-
-        <div id="conteudo" style="display:none;">
-            <!-- MÉTRICAS -->
-            <div class="metrics-grid" id="metrics-grid"></div>
-
-            <!-- MAPA DO BRASIL -->
-            <div class="mapa-card">
-                <div class="chart-title">🗺️ Mapa de Identificações por Estado</div>
-                <p style="font-size:0.82rem;color:#888;margin-bottom:16px;text-align:center;">Clique em um estado para ver os dados detalhados</p>
-                <svg id="mapa-brasil" viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Estados do Brasil simplificados -->
-                    <path id="AC" data-uf="AC" data-nome="Acre" d="M95,420 L180,380 L210,400 L220,430 L180,460 L130,450 Z"/>
-                    <path id="AL" data-uf="AL" data-nome="Alagoas" d="M620,340 L645,330 L655,345 L645,360 L620,355 Z"/>
-                    <path id="AM" data-uf="AM" data-nome="Amazonas" d="M150,230 L320,180 L370,220 L380,310 L340,360 L280,380 L210,400 L180,380 L130,350 L120,290 Z"/>
-                    <path id="AP" data-uf="AP" data-nome="Amapá" d="M400,110 L440,90 L460,130 L450,170 L410,175 L390,150 Z"/>
-                    <path id="BA" data-uf="BA" data-nome="Bahia" d="M530,290 L620,260 L660,300 L670,380 L650,440 L590,470 L540,450 L510,400 L510,340 Z"/>
-                    <path id="CE" data-uf="CE" data-nome="Ceará" d="M570,210 L620,200 L645,230 L630,270 L590,270 L560,250 Z"/>
-                    <path id="DF" data-uf="DF" data-nome="Distrito Federal" d="M507,378 L518,378 L518,390 L507,390 Z"/>
-                    <path id="ES" data-uf="ES" data-nome="Espírito Santo" d="M640,410 L660,400 L668,425 L655,445 L638,435 Z"/>
-                    <path id="GO" data-uf="GO" data-nome="Goiás" d="M460,330 L530,310 L545,360 L530,410 L490,430 L455,410 L445,370 Z"/>
-                    <path id="MA" data-uf="MA" data-nome="Maranhão" d="M460,200 L530,185 L555,220 L545,270 L500,285 L460,270 L445,240 Z"/>
-                    <path id="MG" data-uf="MG" data-nome="Minas Gerais" d="M530,380 L620,360 L650,395 L640,450 L590,475 L540,460 L510,430 L515,390 Z"/>
-                    <path id="MS" data-uf="MS" data-nome="Mato Grosso do Sul" d="M370,440 L450,420 L465,470 L450,520 L390,530 L355,500 L350,460 Z"/>
-                    <path id="MT" data-uf="MT" data-nome="Mato Grosso" d="M290,290 L400,260 L440,300 L450,380 L410,420 L350,430 L300,410 L275,360 Z"/>
-                    <path id="PA" data-uf="PA" data-nome="Pará" d="M320,150 L440,120 L470,160 L480,210 L460,260 L400,285 L350,280 L300,260 L280,210 Z"/>
-                    <path id="PB" data-uf="PB" data-nome="Paraíba" d="M630,255 L665,248 L672,262 L660,275 L630,272 Z"/>
-                    <path id="PE" data-uf="PE" data-nome="Pernambuco" d="M580,270 L650,258 L665,272 L655,288 L615,292 L575,285 Z"/>
-                    <path id="PI" data-uf="PI" data-nome="Piauí" d="M510,215 L565,205 L580,240 L565,280 L530,285 L505,265 Z"/>
-                    <path id="PR" data-uf="PR" data-nome="Paraná" d="M430,530 L510,510 L535,545 L515,585 L450,595 L415,570 Z"/>
-                    <path id="RJ" data-uf="RJ" data-nome="Rio de Janeiro" d="M615,445 L650,435 L662,455 L648,470 L618,465 Z"/>
-                    <path id="RN" data-uf="RN" data-nome="Rio Grande do Norte" d="M635,230 L668,225 L675,245 L658,258 L635,252 Z"/>
-                    <path id="RO" data-uf="RO" data-nome="Rondônia" d="M220,340 L290,310 L305,350 L300,400 L255,415 L215,400 Z"/>
-                    <path id="RR" data-uf="RR" data-nome="Roraima" d="M280,100 L340,80 L365,120 L355,170 L310,180 L275,155 Z"/>
-                    <path id="RS" data-uf="RS" data-nome="Rio Grande do Sul" d="M430,620 L510,600 L530,645 L505,695 L450,700 L415,665 Z"/>
-                    <path id="SC" data-uf="SC" data-nome="Santa Catarina" d="M435,585 L515,568 L528,600 L510,618 L438,618 Z"/>
-                    <path id="SE" data-uf="SE" data-nome="Sergipe" d="M640,355 L658,348 L664,362 L655,372 L638,368 Z"/>
-                    <path id="SP" data-uf="SP" data-nome="São Paulo" d="M490,470 L575,450 L600,480 L585,525 L515,535 L475,510 Z"/>
-                    <path id="TO" data-uf="TO" data-nome="Tocantins" d="M440,265 L500,250 L515,300 L510,360 L465,375 L435,350 L430,300 Z"/>
-                    <!-- Siglas dos estados -->
-                    <text x="148" y="430" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">AC</text>
-                    <text x="635" y="348" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">AL</text>
-                    <text x="248" y="295" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">AM</text>
-                    <text x="425" y="140" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">AP</text>
-                    <text x="585" y="370" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">BA</text>
-                    <text x="600" y="240" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">CE</text>
-                    <text x="513" y="386" font-size="6" fill="#fff" text-anchor="middle" pointer-events="none">DF</text>
-                    <text x="652" y="425" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">ES</text>
-                    <text x="490" y="380" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">GO</text>
-                    <text x="495" y="238" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">MA</text>
-                    <text x="578" y="425" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">MG</text>
-                    <text x="405" y="480" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">MS</text>
-                    <text x="360" y="355" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">MT</text>
-                    <text x="385" y="215" font-size="10" fill="#1b5e20" text-anchor="middle" pointer-events="none">PA</text>
-                    <text x="650" y="264" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">PB</text>
-                    <text x="618" y="278" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">PE</text>
-                    <text x="537" y="250" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">PI</text>
-                    <text x="472" y="558" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">PR</text>
-                    <text x="638" y="455" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">RJ</text>
-                    <text x="654" y="243" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">RN</text>
-                    <text x="258" y="375" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">RO</text>
-                    <text x="318" y="135" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">RR</text>
-                    <text x="470" y="660" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">RS</text>
-                    <text x="480" y="598" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">SC</text>
-                    <text x="650" y="362" font-size="7" fill="#1b5e20" text-anchor="middle" pointer-events="none">SE</text>
-                    <text x="535" y="495" font-size="9" fill="#1b5e20" text-anchor="middle" pointer-events="none">SP</text>
-                    <text x="472" y="315" font-size="8" fill="#1b5e20" text-anchor="middle" pointer-events="none">TO</text>
-                </svg>
-                <div class="mapa-legenda">
-                    <div class="mapa-legenda-cor" style="background:#e0e0e0;"></div> Sem dados
-                    <div class="mapa-legenda-cor" style="background:#c8e6c9;margin-left:8px;"></div> Com identificações
-                    <div class="mapa-legenda-cor" style="background:#1b5e20;margin-left:8px;"></div> Selecionado
-                </div>
-            </div>
-
-            <!-- GRÁFICOS -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-title">📍 Identificações por Estado</div>
-                    <div class="chart-wrap"><canvas id="chart-estados"></canvas></div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">🌱 Top 10 Espécies</div>
-                    <div class="chart-wrap"><canvas id="chart-especies"></canvas></div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">✅ Taxa de Acerto da IA</div>
-                    <div class="chart-wrap"><canvas id="chart-acerto"></canvas></div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">📅 Identificações por Mês</div>
-                    <div class="chart-wrap"><canvas id="chart-meses"></canvas></div>
-                </div>
-            </div>
-
-            <!-- ÚLTIMAS IDENTIFICAÇÕES -->
-            <div class="table-card">
-                <div class="chart-title">🕐 Últimas 50 Identificações</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Espécie</th>
-                            <th>Estado</th>
-                            <th>Data</th>
-                            <th>Confirmada</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-body"></tbody>
-                </table>
-            </div>
-        </div>
+  <nav class="admin-nav">
+    <div>
+      <div class="admin-nav-title">🌿 PlantID Admin</div>
+      <div class="admin-nav-sub">Painel de Dados em Tempo Real</div>
     </div>
+    <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+  </nav>
+  <div class="admin-body">
+    <div id="loading" class="loading">
+      <span class="loading-spinner">⚙️</span>
+      Carregando dados do Firebase...
+    </div>
+    <div id="conteudo" style="display:none;">
+      <div class="metrics-grid" id="metrics-grid"></div>
+
+      <!-- MAPA -->
+      <div class="mapa-card">
+        <div class="chart-title">🗺️ Mapa de Identificações por Estado</div>
+        <p style="font-size:.82rem;color:#888;margin-bottom:16px;">Clique em um estado para ver os dados detalhados</p>
+        <div class="mapa-wrap">
+          <div class="mapa-svg-wrap">
+            <!-- SVG Brasil com paths precisos -->
+            <svg id="mapa-brasil" viewBox="0 0 1000 1100" xmlns="http://www.w3.org/2000/svg">
+              <g id="estados">
+                <path class="estado" id="AC" data-uf="AC" data-nome="Acre" d="M 110,530 L 200,480 L 250,490 L 270,520 L 240,560 L 170,570 Z"/>
+                <path class="estado" id="AL" data-uf="AL" data-nome="Alagoas" d="M 780,420 L 820,408 L 835,428 L 820,448 L 780,442 Z"/>
+                <path class="estado" id="AM" data-uf="AM" data-nome="Amazonas" d="M 175,270 L 380,200 L 440,250 L 460,370 L 410,440 L 340,470 L 255,500 L 200,490 L 155,440 L 140,350 Z"/>
+                <path class="estado" id="AP" data-uf="AP" data-nome="Amapá" d="M 490,120 L 545,95 L 575,145 L 560,200 L 510,210 L 480,175 Z"/>
+                <path class="estado" id="BA" data-uf="BA" data-nome="Bahia" d="M 650,345 L 780,305 L 830,360 L 840,470 L 810,550 L 730,590 L 660,560 L 625,490 L 620,410 Z"/>
+                <path class="estado" id="CE" data-uf="CE" data-nome="Ceará" d="M 700,248 L 765,235 L 800,272 L 780,330 L 730,335 L 695,308 Z"/>
+                <path class="estado" id="DF" data-uf="DF" data-nome="Distrito Federal" d="M 618,468 L 634,468 L 634,484 L 618,484 Z"/>
+                <path class="estado" id="ES" data-uf="ES" data-nome="Espírito Santo" d="M 790,510 L 820,498 L 832,528 L 815,552 L 790,540 Z"/>
+                <path class="estado" id="GO" data-uf="GO" data-nome="Goiás" d="M 560,400 L 655,370 L 672,435 L 658,510 L 610,535 L 558,510 L 545,458 Z"/>
+                <path class="estado" id="MA" data-uf="MA" data-nome="Maranhão" d="M 558,238 L 652,218 L 682,262 L 668,330 L 610,345 L 556,325 L 540,284 Z"/>
+                <path class="estado" id="MG" data-uf="MG" data-nome="Minas Gerais" d="M 648,458 L 780,430 L 818,478 L 808,560 L 730,595 L 660,568 L 628,522 L 630,470 Z"/>
+                <path class="estado" id="MS" data-uf="MS" data-nome="Mato Grosso do Sul" d="M 448,548 L 558,518 L 578,582 L 558,650 L 474,662 L 432,620 L 428,570 Z"/>
+                <path class="estado" id="MT" data-uf="MT" data-nome="Mato Grosso" d="M 348,355 L 498,315 L 548,368 L 558,468 L 508,528 L 428,545 L 360,520 L 328,448 Z"/>
+                <path class="estado" id="PA" data-uf="PA" data-nome="Pará" d="M 378,178 L 542,138 L 582,188 L 598,258 L 568,338 L 488,358 L 418,350 L 358,318 L 332,258 Z"/>
+                <path class="estado" id="PB" data-uf="PB" data-nome="Paraíba" d="M 778,308 L 828,298 L 840,318 L 826,338 L 778,332 Z"/>
+                <path class="estado" id="PE" data-uf="PE" data-nome="Pernambuco" d="M 705,338 L 810,322 L 830,342 L 818,362 L 758,368 L 702,358 Z"/>
+                <path class="estado" id="PI" data-uf="PI" data-nome="Piauí" d="M 620,258 L 695,242 L 712,288 L 695,348 L 650,355 L 618,328 Z"/>
+                <path class="estado" id="PR" data-uf="PR" data-nome="Paraná" d="M 518,665 L 632,638 L 662,682 L 640,735 L 556,748 L 508,712 Z"/>
+                <path class="estado" id="RJ" data-uf="RJ" data-nome="Rio de Janeiro" d="M 760,558 L 812,542 L 828,568 L 808,590 L 760,582 Z"/>
+                <path class="estado" id="RN" data-uf="RN" data-nome="Rio Grande do Norte" d="M 792,275 L 842,265 L 855,292 L 835,312 L 792,305 Z"/>
+                <path class="estado" id="RO" data-uf="RO" data-nome="Rondônia" d="M 268,422 L 358,382 L 378,435 L 372,508 L 308,528 L 258,508 Z"/>
+                <path class="estado" id="RR" data-uf="RR" data-nome="Roraima" d="M 342,118 L 420,92 L 452,148 L 438,215 L 378,228 L 335,192 Z"/>
+                <path class="estado" id="RS" data-uf="RS" data-nome="Rio Grande do Sul" d="M 518,778 L 635,752 L 662,808 L 632,878 L 554,888 L 505,838 Z"/>
+                <path class="estado" id="SC" data-uf="SC" data-nome="Santa Catarina" d="M 522,738 L 642,715 L 660,748 L 638,775 L 522,772 Z"/>
+                <path class="estado" id="SE" data-uf="SE" data-nome="Sergipe" d="M 798,448 L 825,438 L 835,458 L 822,472 L 798,465 Z"/>
+                <path class="estado" id="SP" data-uf="SP" data-nome="São Paulo" d="M 598,588 L 725,558 L 755,602 L 735,658 L 638,672 L 578,638 Z"/>
+                <path class="estado" id="TO" data-uf="TO" data-nome="Tocantins" d="M 538,318 L 622,298 L 642,362 L 635,448 L 578,468 L 532,438 L 522,375 Z"/>
+              </g>
+              <!-- Labels dos estados -->
+              <g style="pointer-events:none;font-family:DM Sans,sans-serif;font-weight:600;">
+                <text x="182" y="535" font-size="13" fill="#1b5e20" text-anchor="middle">AC</text>
+                <text x="800" y="432" font-size="9" fill="#1b5e20" text-anchor="middle">AL</text>
+                <text x="295" y="360" font-size="16" fill="#1b5e20" text-anchor="middle">AM</text>
+                <text x="525" y="158" font-size="11" fill="#1b5e20" text-anchor="middle">AP</text>
+                <text x="725" y="450" font-size="16" fill="#1b5e20" text-anchor="middle">BA</text>
+                <text x="745" y="290" font-size="12" fill="#1b5e20" text-anchor="middle">CE</text>
+                <text x="626" y="479" font-size="7" fill="#fff" text-anchor="middle">DF</text>
+                <text x="808" y="528" font-size="9" fill="#1b5e20" text-anchor="middle">ES</text>
+                <text x="602" y="462" font-size="13" fill="#1b5e20" text-anchor="middle">GO</text>
+                <text x="608" y="285" font-size="13" fill="#1b5e20" text-anchor="middle">MA</text>
+                <text x="718" y="508" font-size="14" fill="#1b5e20" text-anchor="middle">MG</text>
+                <text x="498" y="598" font-size="13" fill="#1b5e20" text-anchor="middle">MS</text>
+                <text x="432" y="432" font-size="15" fill="#1b5e20" text-anchor="middle">MT</text>
+                <text x="465" y="258" font-size="15" fill="#1b5e20" text-anchor="middle">PA</text>
+                <text x="808" y="318" font-size="9" fill="#1b5e20" text-anchor="middle">PB</text>
+                <text x="758" y="348" font-size="11" fill="#1b5e20" text-anchor="middle">PE</text>
+                <text x="658" y="305" font-size="12" fill="#1b5e20" text-anchor="middle">PI</text>
+                <text x="578" y="698" font-size="13" fill="#1b5e20" text-anchor="middle">PR</text>
+                <text x="792" y="568" font-size="9" fill="#1b5e20" text-anchor="middle">RJ</text>
+                <text x="818" y="292" font-size="9" fill="#1b5e20" text-anchor="middle">RN</text>
+                <text x="315" y="468" font-size="12" fill="#1b5e20" text-anchor="middle">RO</text>
+                <text x="390" y="162" font-size="12" fill="#1b5e20" text-anchor="middle">RR</text>
+                <text x="575" y="835" font-size="13" fill="#1b5e20" text-anchor="middle">RS</text>
+                <text x="585" y="752" font-size="11" fill="#1b5e20" text-anchor="middle">SC</text>
+                <text x="812" y="458" font-size="9" fill="#1b5e20" text-anchor="middle">SE</text>
+                <text x="668" y="618" font-size="13" fill="#1b5e20" text-anchor="middle">SP</text>
+                <text x="578" y="385" font-size="12" fill="#1b5e20" text-anchor="middle">TO</text>
+              </g>
+            </svg>
+            <div class="mapa-legenda">
+              <div class="mapa-leg-item"><div class="mapa-leg-cor" style="background:#e0e0e0;"></div> Sem dados</div>
+              <div class="mapa-leg-item"><div class="mapa-leg-cor" style="background:#c8e6c9;"></div> Com identificações</div>
+              <div class="mapa-leg-item"><div class="mapa-leg-cor" style="background:#1b5e20;"></div> Selecionado</div>
+            </div>
+          </div>
+          <!-- PAINEL LATERAL DE INFOS -->
+          <div class="mapa-info" id="mapa-info">
+            <div class="mapa-info-vazio">👆 Clique em um estado para ver os dados</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">📍 Top 10 Estados</div>
+          <div class="chart-wrap"><canvas id="chart-estados"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🌱 Top 10 Espécies</div>
+          <div class="chart-wrap"><canvas id="chart-especies"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">✅ Taxa de Acerto da IA</div>
+          <div class="chart-wrap"><canvas id="chart-acerto"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📅 Identificações por Mês</div>
+          <div class="chart-wrap"><canvas id="chart-meses"></canvas></div>
+        </div>
+      </div>
+
+      <!-- TABELA -->
+      <div class="table-card">
+        <div class="chart-title">🕐 Últimas 50 Identificações</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Espécie</th><th>Estado</th><th>Data</th><th>Confirmada</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
 const SENHA = '@Vinny04022004';
 const FB_CONFIG = {
-    apiKey: "AIzaSyBwyxvfmL8rVzj_pCB6WjIUtvjRS0H2Ig0",
-    authDomain: "plantid-fbc60.firebaseapp.com",
-    projectId: "plantid-fbc60",
-    storageBucket: "plantid-fbc60.firebasestorage.app",
-    messagingSenderId: "619440929372",
-    appId: "1:619440929372:web:fa6a7c27fb0bcb590c4499"
+    apiKey:"AIzaSyBwyxvfmL8rVzj_pCB6WjIUtvjRS0H2Ig0",
+    authDomain:"plantid-fbc60.firebaseapp.com",
+    projectId:"plantid-fbc60",
+    storageBucket:"plantid-fbc60.firebasestorage.app",
+    messagingSenderId:"619440929372",
+    appId:"1:619440929372:web:fa6a7c27fb0bcb590c4499"
 };
 
-let db = null;
-
 function fazerLogin() {
-    const val = document.getElementById('senha-input').value;
-    if (val === SENHA) {
+    if (document.getElementById('senha-input').value === SENHA) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('painel').style.display = 'block';
         iniciarPainel();
@@ -404,12 +250,12 @@ function fazerLogout() {
 async function iniciarPainel() {
     try {
         firebase.initializeApp(FB_CONFIG);
-        db = firebase.firestore();
-        const snap = await db.collection('identificacoes').orderBy('timestamp', 'desc').limit(500).get();
+        const db = firebase.firestore();
+        const snap = await db.collection('identificacoes').orderBy('timestamp','desc').limit(500).get();
         const dados = snap.docs.map(d => d.data());
         renderizarPainel(dados);
     } catch(e) {
-        document.getElementById('loading').innerHTML = `<p style="color:#c62828;">Erro ao carregar: ${e.message}</p>`;
+        document.getElementById('loading').innerHTML = `<p style="color:#c62828;">Erro: ${e.message}</p>`;
     }
 }
 
@@ -420,126 +266,148 @@ function renderizarPainel(dados) {
     const total = dados.length;
     const confirmadas = dados.filter(d => d.confirmada === true).length;
     const incorretas = dados.filter(d => d.confirmada === false).length;
-    const pendentes = dados.filter(d => d.confirmada === null || d.confirmada === undefined).length;
-    const taxaAcerto = confirmadas + incorretas > 0 ? ((confirmadas / (confirmadas + incorretas)) * 100).toFixed(1) : '—';
-    const estados = [...new Set(dados.map(d => d.estado).filter(Boolean))].length;
+    const pendentes = dados.filter(d => d.confirmada == null).length;
+    const taxaAcerto = confirmadas+incorretas > 0 ? ((confirmadas/(confirmadas+incorretas))*100).toFixed(1) : '—';
+    const estados = [...new Set(dados.map(d=>d.estado).filter(Boolean))].length;
 
-    // Métricas
     document.getElementById('metrics-grid').innerHTML = `
-        <div class="metric-card">
-            <div class="metric-label">Total de Identificações</div>
-            <div class="metric-value">${total}</div>
-            <div class="metric-sub">últimas 500 registradas</div>
-        </div>
-        <div class="metric-card" style="border-left-color:#2e7d32;">
-            <div class="metric-label">Confirmadas Corretas</div>
-            <div class="metric-value" style="color:#2e7d32;">${confirmadas}</div>
-            <div class="metric-sub">pelo usuário</div>
-        </div>
-        <div class="metric-card" style="border-left-color:#c62828;">
-            <div class="metric-label">Marcadas Incorretas</div>
-            <div class="metric-value" style="color:#c62828;">${incorretas}</div>
-            <div class="metric-sub">pelo usuário</div>
-        </div>
-        <div class="metric-card" style="border-left-color:#e65100;">
-            <div class="metric-label">Taxa de Acerto da IA</div>
-            <div class="metric-value" style="color:#e65100;">${taxaAcerto}%</div>
-            <div class="metric-sub">com feedback</div>
-        </div>
-        <div class="metric-card" style="border-left-color:#1565c0;">
-            <div class="metric-label">Estados Ativos</div>
-            <div class="metric-value" style="color:#1565c0;">${estados}</div>
-            <div class="metric-sub">com identificações</div>
-        </div>
-        <div class="metric-card" style="border-left-color:#6a1b9a;">
-            <div class="metric-label">Aguardando Feedback</div>
-            <div class="metric-value" style="color:#6a1b9a;">${pendentes}</div>
-            <div class="metric-sub">sem resposta</div>
-        </div>
+        <div class="metric-card"><div class="metric-label">Total Identificações</div><div class="metric-value">${total}</div><div class="metric-sub">últimas 500</div></div>
+        <div class="metric-card" style="border-left-color:#2e7d32"><div class="metric-label">Corretas</div><div class="metric-value" style="color:#2e7d32">${confirmadas}</div><div class="metric-sub">confirmadas</div></div>
+        <div class="metric-card" style="border-left-color:#b71c1c"><div class="metric-label">Incorretas</div><div class="metric-value" style="color:#b71c1c">${incorretas}</div><div class="metric-sub">pelo usuário</div></div>
+        <div class="metric-card" style="border-left-color:#f9a825"><div class="metric-label">Taxa de Acerto</div><div class="metric-value" style="color:#f9a825">${taxaAcerto}%</div><div class="metric-sub">com feedback</div></div>
+        <div class="metric-card" style="border-left-color:#1565c0"><div class="metric-label">Estados Ativos</div><div class="metric-value" style="color:#1565c0">${estados}</div><div class="metric-sub">com dados</div></div>
+        <div class="metric-card" style="border-left-color:#6a1b9a"><div class="metric-label">Pendentes</div><div class="metric-value" style="color:#6a1b9a">${pendentes}</div><div class="metric-sub">sem feedback</div></div>
     `;
+
+    // Dados por estado
+    const porEstado = {};
+    dados.forEach(d => {
+        if (!d.estado) return;
+        if (!porEstado[d.estado]) porEstado[d.estado] = { total:0, corretas:0, incorretas:0, pendentes:0, especies:{}, ultima:null };
+        const e = porEstado[d.estado];
+        e.total++;
+        if (d.confirmada === true) e.corretas++;
+        else if (d.confirmada === false) e.incorretas++;
+        else e.pendentes++;
+        if (d.especie) e.especies[d.especie] = (e.especies[d.especie]||0)+1;
+        if (d.timestamp?.toDate) {
+            const dt = d.timestamp.toDate();
+            if (!e.ultima || dt > e.ultima) e.ultima = dt;
+        }
+    });
+
+    // Mapa interativo
+    iniciarMapa(porEstado);
 
     const verde = ['#1b5e20','#2e7d32','#388e3c','#43a047','#4caf50','#66bb6a','#81c784','#a5d6a7','#c8e6c9','#e8f5e9'];
 
     // Gráfico estados
-    const porEstado = {};
-    dados.forEach(d => { if(d.estado) porEstado[d.estado] = (porEstado[d.estado]||0)+1; });
-    const estadosOrdenados = Object.entries(porEstado).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    new Chart(document.getElementById('chart-estados'), {
-        type: 'bar',
-        data: {
-            labels: estadosOrdenados.map(e=>e[0]),
-            datasets: [{ data: estadosOrdenados.map(e=>e[1]), backgroundColor: verde, borderRadius: 8 }]
-        },
-        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, maintainAspectRatio: false }
+    const estadosOrd = Object.entries(porEstado).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+    new Chart(document.getElementById('chart-estados'),{
+        type:'bar',
+        data:{ labels:estadosOrd.map(e=>e[0]), datasets:[{ data:estadosOrd.map(e=>e[1].total), backgroundColor:verde, borderRadius:8 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}, maintainAspectRatio:false }
     });
 
     // Gráfico espécies
     const porEspecie = {};
-    dados.forEach(d => { if(d.especie) porEspecie[d.especie] = (porEspecie[d.especie]||0)+1; });
-    const especiesOrdenadas = Object.entries(porEspecie).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    new Chart(document.getElementById('chart-especies'), {
-        type: 'bar',
-        data: {
-            labels: especiesOrdenadas.map(e=>e[0].split(' ').slice(0,2).join(' ')),
-            datasets: [{ data: especiesOrdenadas.map(e=>e[1]), backgroundColor: verde, borderRadius: 8 }]
-        },
-        options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, maintainAspectRatio: false }
+    dados.forEach(d=>{ if(d.especie) porEspecie[d.especie]=(porEspecie[d.especie]||0)+1; });
+    const especiesOrd = Object.entries(porEspecie).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    new Chart(document.getElementById('chart-especies'),{
+        type:'bar',
+        data:{ labels:especiesOrd.map(e=>e[0].split(' ').slice(0,2).join(' ')), datasets:[{ data:especiesOrd.map(e=>e[1]), backgroundColor:verde, borderRadius:8 }] },
+        options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{stepSize:1}}}, maintainAspectRatio:false }
     });
 
-    // Gráfico acerto
-    new Chart(document.getElementById('chart-acerto'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Corretas', 'Incorretas', 'Pendentes'],
-            datasets: [{ data: [confirmadas, incorretas, pendentes], backgroundColor: ['#2e7d32','#b71c1c','#f9a825'], borderWidth: 0 }]
-        },
-        options: {
-            plugins: {
-                legend: { position: 'bottom' },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${total > 0 ? ((ctx.raw/total)*100).toFixed(1) : 0}%)` } }
-            },
-            maintainAspectRatio: false
-        }
+    // Pizza acerto — cores distintas
+    new Chart(document.getElementById('chart-acerto'),{
+        type:'doughnut',
+        data:{ labels:['Corretas','Incorretas','Pendentes'], datasets:[{ data:[confirmadas,incorretas,pendentes], backgroundColor:['#2e7d32','#b71c1c','#f9a825'], borderWidth:0 }] },
+        options:{ plugins:{ legend:{position:'bottom'}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} (${total>0?((ctx.raw/total)*100).toFixed(1):0}%)`}} }, maintainAspectRatio:false }
     });
 
-    // Gráfico meses
+    // Linha meses
     const porMes = {};
-    dados.forEach(d => {
-        if(d.mes && d.ano) {
-            const k = `${d.ano}/${String(d.mes).padStart(2,'0')}`;
-            porMes[k] = (porMes[k]||0)+1;
+    dados.forEach(d=>{ if(d.mes&&d.ano){ const k=`${d.ano}/${String(d.mes).padStart(2,'0')}`; porMes[k]=(porMes[k]||0)+1; } });
+    const mesesOrd = Object.entries(porMes).sort((a,b)=>a[0].localeCompare(b[0]));
+    new Chart(document.getElementById('chart-meses'),{
+        type:'line',
+        data:{ labels:mesesOrd.map(m=>m[0]), datasets:[{ data:mesesOrd.map(m=>m[1]), borderColor:'#1b5e20', backgroundColor:'rgba(27,94,32,0.08)', fill:true, tension:0.4, pointBackgroundColor:'#1b5e20' }] },
+        options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}, maintainAspectRatio:false }
+    });
+
+    // Tabela
+    document.getElementById('tabela-body').innerHTML = dados.slice(0,50).map(d => {
+        const ts = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleDateString('pt-BR') : `${d.mes||'?'}/${d.ano||'?'}`;
+        const badge = d.confirmada===true ? '<span class="badge badge-sim">✅ Sim</span>'
+            : d.confirmada===false ? '<span class="badge badge-nao">❌ Não</span>'
+            : '<span class="badge badge-pend">⏳ Pendente</span>';
+        return `<tr><td><em>${d.especie||'—'}</em></td><td><span class="estado-badge">${d.estado||'—'}</span></td><td>${ts}</td><td>${badge}</td></tr>`;
+    }).join('');
+}
+
+function iniciarMapa(porEstado) {
+    const paths = document.querySelectorAll('#mapa-brasil .estado');
+    const infoPanel = document.getElementById('mapa-info');
+    let selecionado = null;
+
+    // Colorir por intensidade
+    const maxTotal = Math.max(...Object.values(porEstado).map(e=>e.total), 1);
+    paths.forEach(path => {
+        const uf = path.dataset.uf;
+        if (!porEstado[uf]) {
+            path.classList.add('sem-dado');
+        } else {
+            // Intensidade proporcional
+            const ratio = porEstado[uf].total / maxTotal;
+            const g = Math.round(94 + (1-ratio)*100); // de verde escuro a claro
+            path.style.fill = `rgb(${Math.round(27+ratio*20)},${g},${Math.round(32+ratio*100)})`;
         }
     });
-    const mesesOrdenados = Object.entries(porMes).sort((a,b)=>a[0].localeCompare(b[0]));
-    new Chart(document.getElementById('chart-meses'), {
-        type: 'line',
-        data: {
-            labels: mesesOrdenados.map(m=>m[0]),
-            datasets: [{ data: mesesOrdenados.map(m=>m[1]), borderColor: '#1b5e20', backgroundColor: 'rgba(27,94,32,0.08)', fill: true, tension: 0.4, pointBackgroundColor: '#1b5e20' }]
-        },
-        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, maintainAspectRatio: false }
+
+    paths.forEach(path => {
+        path.addEventListener('click', () => {
+            const uf = path.dataset.uf;
+            const nome = path.dataset.nome;
+
+            // Toggle seleção
+            if (selecionado) selecionado.classList.remove('selecionado');
+            if (selecionado === path) {
+                selecionado = null;
+                infoPanel.innerHTML = '<div class="mapa-info-vazio">👆 Clique em um estado para ver os dados</div>';
+                return;
+            }
+            path.classList.add('selecionado');
+            selecionado = path;
+
+            const e = porEstado[uf];
+            if (!e) {
+                infoPanel.innerHTML = `<div class="mapa-info-titulo">📍 ${nome} (${uf})</div><div class="mapa-info-linha" style="justify-content:center;color:#aaa;">Nenhuma identificação ainda</div>`;
+                return;
+            }
+
+            const taxa = e.corretas+e.incorretas>0 ? ((e.corretas/(e.corretas+e.incorretas))*100).toFixed(0)+'%' : '—';
+            const ultima = e.ultima ? e.ultima.toLocaleDateString('pt-BR') : '—';
+            const topEsp = Object.entries(e.especies).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+            infoPanel.innerHTML = `
+                <div class="mapa-info-titulo">📍 ${nome} (${uf})</div>
+                <div class="mapa-info-linha"><span>Total de identificações</span><span class="mapa-info-val">${e.total}</span></div>
+                <div class="mapa-info-linha"><span>✅ Corretas</span><span class="mapa-info-val" style="color:#2e7d32">${e.corretas}</span></div>
+                <div class="mapa-info-linha"><span>❌ Incorretas</span><span class="mapa-info-val" style="color:#b71c1c">${e.incorretas}</span></div>
+                <div class="mapa-info-linha"><span>⏳ Pendentes</span><span class="mapa-info-val" style="color:#f9a825">${e.pendentes}</span></div>
+                <div class="mapa-info-linha"><span>🎯 Taxa de acerto</span><span class="mapa-info-val">${taxa}</span></div>
+                <div class="mapa-info-linha"><span>🌿 Espécies únicas</span><span class="mapa-info-val">${Object.keys(e.especies).length}</span></div>
+                ${topEsp.length ? `
+                <div class="mapa-info-linha" style="margin-top:8px;font-weight:600;color:var(--soft);font-size:.75rem;letter-spacing:1px;text-transform:uppercase;">Top Espécies</div>
+                ${topEsp.map(([esp,n])=>`<div class="mapa-info-linha"><span><em>${esp.split(' ').slice(0,2).join(' ')}</em></span><span class="mapa-info-val">${n}x</span></div>`).join('')}` : ''}
+                <div class="mapa-info-linha" style="color:#aaa;font-size:.75rem;"><span>Última identificação</span><span>${ultima}</span></div>
+            `;
+        });
+
+        path.addEventListener('mouseenter', () => { if(path!==selecionado) path.style.opacity='0.8'; });
+        path.addEventListener('mouseleave', () => { path.style.opacity='1'; });
     });
-
-    // MAPA INTERATIVO
-    iniciarMapa(dados, porEstado);
-
-    // Tabela últimas 50
-    const ultimas = dados.slice(0, 50);
-    document.getElementById('tabela-body').innerHTML = ultimas.map(d => {
-        const ts = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleDateString('pt-BR') : `${d.mes||'?'}/${d.ano||'?'}`;
-        const badge = d.confirmada === true
-            ? '<span class="badge badge-sim">✅ Sim</span>'
-            : d.confirmada === false
-            ? '<span class="badge badge-nao">❌ Não</span>'
-            : '<span class="badge badge-pend">⏳ Pendente</span>';
-        return `
-            <tr>
-                <td><em>${d.especie || '—'}</em></td>
-                <td><span class="estado-badge">${d.estado || '—'}</span></td>
-                <td>${ts}</td>
-                <td>${badge}</td>
-            </tr>`;
-    }).join('');
 }
 </script>
 </body>

@@ -17,6 +17,10 @@
     <style>
         :root {
             --transition-theme: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            --radius-card: 20px;
+            --radius-btn: 14px;
+            --shadow-card: 0 4px 24px rgba(27,94,32,0.08);
+            --shadow-hover: 0 8px 40px rgba(27,94,32,0.14);
             --primary: #1b5e20;
             --primary-light: #2e7d32;
             --accent: #4caf50;
@@ -34,7 +38,7 @@
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--kraft);
+            background-color: #f0ede3;
             min-height: 100vh;
             color: var(--text-dark);
             overflow-x: hidden;
@@ -364,16 +368,17 @@
             position: fixed;
             bottom: 82px;
             right: 20px;
-            background: #fff;
-            border-radius: 18px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
             padding: 20px;
-            width: 240px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            width: 248px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid rgba(200,230,201,0.3);
             z-index: 799;
             opacity: 0;
-            transform: translateY(12px) scale(0.97);
+            transform: translateY(16px) scale(0.95);
             pointer-events: none;
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            transition: opacity 0.28s cubic-bezier(0.34,1.56,0.64,1), transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
         }
         #config-panel.open {
             opacity: 1;
@@ -492,23 +497,24 @@
 
         nav button {
             background: transparent;
-            border: 1.5px solid rgba(255,255,255,0.25);
-            color: rgba(255,255,255,0.7);
+            border: 1.5px solid rgba(255,255,255,0.22);
+            color: rgba(255,255,255,0.65);
             font-family: 'DM Sans', sans-serif;
             font-weight: 500;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            padding: 8px 22px;
+            padding: 8px 20px;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.25s;
+            backdrop-filter: blur(4px);
         }
 
         nav button.active,
         nav button:hover {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.55);
             color: white;
         }
 
@@ -516,6 +522,7 @@
             background: white;
             color: var(--primary);
             border-color: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
         }
 
         /* ── LAYOUT ── */
@@ -571,29 +578,32 @@
 
         /* ── CARD ── */
         .card {
-            background: var(--glass);
-            border-radius: 24px;
+            background: rgba(255,255,255,0.98);
+            border-radius: var(--radius-card);
             padding: 32px;
-            box-shadow: 0 8px 32px rgba(27,94,32,0.10), 0 1px 4px rgba(0,0,0,0.06);
-            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(200,230,201,0.4);
             margin-bottom: 24px;
+            transition: box-shadow 0.25s;
         }
+        .card:hover { box-shadow: var(--shadow-hover); }
 
         /* ── UPLOAD BOX ── */
         .upload-box {
-            border: 2px dashed var(--accent-soft);
-            border-radius: 18px;
-            padding: 52px 20px;
+            border: 2px dashed rgba(165,214,167,0.7);
+            border-radius: 16px;
+            padding: 48px 20px;
             text-align: center;
             cursor: pointer;
-            background: rgba(165,214,167,0.08);
+            background: linear-gradient(135deg, rgba(165,214,167,0.06) 0%, rgba(255,255,255,0.4) 100%);
             position: relative;
-            transition: all 0.25s;
+            transition: all 0.3s;
         }
 
         .upload-box:hover {
-            border-color: var(--accent);
-            background: rgba(76,175,80,0.06);
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(165,214,167,0.12) 0%, rgba(255,255,255,0.6) 100%);
+            transform: translateY(-2px);
         }
 
         .upload-icon {
@@ -631,31 +641,33 @@
         .btn-scan {
             width: 100%;
             padding: 18px;
-            border-radius: 14px;
+            border-radius: var(--radius-btn);
             border: none;
             font-family: 'DM Sans', sans-serif;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             letter-spacing: 2.5px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
             margin-top: 20px;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 16px rgba(27,94,32,0.25);
         }
 
         .btn-scan::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
         }
 
-        .btn-scan:disabled { background: #c8d9c9; color: #9ab09b; cursor: default; }
-        .btn-scan:not(:disabled):hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(27,94,32,0.3); }
+        .btn-scan:disabled { background: #dce8dc; color: #9ab09b; cursor: default; box-shadow: none; }
+        .btn-scan:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(27,94,32,0.35); }
+        .btn-scan:not(:disabled):active { transform: translateY(0); }
 
         #status-ia {
             text-align: center;
@@ -777,19 +789,20 @@
         .herb-search {
             width: 100%;
             padding: 13px 18px 13px 44px;
-            border: 1.5px solid #c8e6c9;
-            border-radius: 14px;
+            border: 1.5px solid rgba(200,230,201,0.6);
+            border-radius: 50px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: var(--text-mid);
-            background: #fff;
+            background: rgba(255,255,255,0.95);
             outline: none;
             transition: border 0.2s, box-shadow 0.2s;
             box-sizing: border-box;
+            box-shadow: 0 2px 10px rgba(27,94,32,0.06);
         }
         .herb-search:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(27,94,32,0.08);
+            box-shadow: 0 0 0 3px rgba(27,94,32,0.08), 0 2px 10px rgba(27,94,32,0.06);
         }
         .herb-search-icon {
             position: absolute;
@@ -1046,18 +1059,18 @@
 
         .herb-card {
             background: white;
-            border-radius: 18px;
+            border-radius: var(--radius-card);
             overflow: hidden;
             cursor: pointer;
             position: relative;
-            transition: all 0.3s;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-            border: 1px solid rgba(165,214,167,0.3);
+            transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(200,230,201,0.35);
         }
 
         .herb-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 14px 32px rgba(27,94,32,0.15);
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: var(--shadow-hover);
         }
 
         .herb-card img {
@@ -2192,27 +2205,27 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <div class="info-grid">
                     <div class="info-box">
                         <span class="info-label">Sistema Radicular</span>
-                        <span class="info-value">${p.raiz || '—'}</span>
+                        ${formatarInfoValue(p.raiz)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Caule</span>
-                        <span class="info-value">${p.caule || '—'}</span>
+                        ${formatarInfoValue(p.caule)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Folhas</span>
-                        <span class="info-value">${p.folha || '—'}</span>
+                        ${formatarInfoValue(p.folha)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Flores</span>
-                        <span class="info-value">${p.flores || '—'}</span>
+                        ${formatarInfoValue(p.flores)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Frutos</span>
-                        <span class="info-value">${p.frutos || '—'}</span>
+                        ${formatarInfoValue(p.frutos)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Sementes & Dispersão</span>
-                        <span class="info-value">${p.sementes || '—'}</span>
+                        ${formatarInfoValue(p.sementes)}
                     </div>
                 </div>
             </div>
@@ -2234,19 +2247,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                     </div>
                     <div class="info-box">
                         <span class="info-label">Solo & pH</span>
-                        <span class="info-value">${p.solo || '—'}</span>
+                        ${formatarInfoValue(p.solo)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Fertilização NPK</span>
-                        <span class="info-value">${p.fertilizante || '—'}</span>
+                        ${formatarInfoValue(p.fertilizante)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Poda</span>
-                        <span class="info-value">${p.poda || '—'}</span>
+                        ${formatarInfoValue(p.poda)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Propagação</span>
-                        <span class="info-value">${p.propagacao || '—'}</span>
+                        ${formatarInfoValue(p.propagacao)}
                     </div>
                 </div>
             </div>
@@ -2260,19 +2273,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <div class="info-grid single">
                     <div class="info-box danger">
                         <span class="info-label">Pragas Principais</span>
-                        <span class="info-value">${p.pragas || '—'}</span>
+                        ${formatarInfoValue(p.pragas)}
                     </div>
                     <div class="info-box danger">
                         <span class="info-label">Doenças</span>
-                        <span class="info-value">${p.doencas || '—'}</span>
+                        ${formatarInfoValue(p.doencas)}
                     </div>
                     <div class="info-box warn">
                         <span class="info-label">Defensivos Recomendados</span>
-                        <span class="info-value">${p.defensivos || '—'}</span>
+                        ${formatarInfoValue(p.defensivos)}
                     </div>
                     <div class="info-box warn">
                         <span class="info-label">Curiosidade Técnica</span>
-                        <span class="info-value">${p.especifico || '—'}</span>
+                        ${formatarInfoValue(p.especifico)}
                     </div>
                 </div>
             </div>
@@ -2286,19 +2299,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <div class="info-grid single">
                     <div class="info-box eco">
                         <span class="info-label">Uso Medicinal & Fitoquímica</span>
-                        <span class="info-value">${p.uso_medicinal || '—'}</span>
+                        ${formatarInfoValue(p.uso_medicinal)}
                     </div>
                     <div class="info-box eco">
                         <span class="info-label">Valor Econômico & Mercado</span>
-                        <span class="info-value">${p.uso_economico || '—'}</span>
+                        ${formatarInfoValue(p.uso_economico)}
                     </div>
                     <div class="info-box ${(p.toxicidade && p.toxicidade.toLowerCase().includes('alta')) ? 'danger' : 'warn'}">
                         <span class="info-label">Toxicidade</span>
-                        <span class="info-value">${p.toxicidade || '—'}</span>
+                        ${formatarInfoValue(p.toxicidade)}
                     </div>
                     <div class="info-box">
                         <span class="info-label">Conservação & IUCN</span>
-                        <span class="info-value">${p.conservacao || '—'}</span>
+                        ${formatarInfoValue(p.conservacao)}
                     </div>
                 </div>
             </div>
@@ -3053,6 +3066,41 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             b.classList.toggle('ativa', b.textContent === letra);
         });
         renderGlossario(window.GLOSSARIO.filter(g => g.termo[0].toUpperCase() === letra));
+    }
+
+    /* ── FORMATADOR DE INFO-VALUES ── */
+    function formatarInfoValue(texto) {
+        if (!texto || texto === '—') return '<span class="info-value">—</span>';
+
+        var regex = /(?:^|[.]\s)([A-ZÀ-ÿ][^:.]{1,40}):\s/g;
+        var matches = [];
+        var m;
+        while ((m = regex.exec(texto)) !== null) matches.push(m);
+
+        if (matches.length < 2) {
+            return '<span class="info-value">' + texto + '</span>';
+        }
+
+        var topicos = [];
+        matches.forEach(function(match, i) {
+            var offset = match[0].charAt(0) === '.' ? 2 : 0;
+            var inicio = match.index + offset;
+            var fimChave = inicio + match[0].trim().length;
+            var fim = i + 1 < matches.length
+                ? matches[i + 1].index + (matches[i + 1][0].charAt(0) === '.' ? 1 : 0)
+                : texto.length;
+            var chave = match[1].trim();
+            var valor = texto.slice(fimChave, fim).trim().replace(/[.]\s*$/, '').trim();
+            if (chave && valor) topicos.push({ chave: chave, valor: valor });
+        });
+
+        if (topicos.length === 0) return '<span class="info-value">' + texto + '</span>';
+
+        var html = topicos.map(function(t) {
+            return '<li class="info-topico"><span class="info-topico-chave">' + t.chave + ':</span> <span class="info-topico-valor">' + t.valor + '</span></li>';
+        }).join('');
+
+        return '<ul class="info-topicos">' + html + '</ul>';
     }
 
     /* ── FLOATING LEAVES ENGINE ── */

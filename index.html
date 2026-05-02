@@ -783,22 +783,9 @@
 
         /* ── CURSOR PERSONALIZADO & PARTÍCULAS ── */
         @media (pointer: fine) {
-            * { cursor: none !important; }
+            html, body, * { cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj4KICA8cGF0aCBkPSJNNiA1MiBDNiA1MiAxNCAyMCAzNiAxMCBDNTIgMyA2MCAxMiA1OCAyNiBDNTQgNDQgMzIgNTggNiA1MloiIGZpbGw9IiMzYTdhMjgiIG9wYWNpdHk9IjAuMyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMiwyKSIvPgogIDxwYXRoIGQ9Ik02IDUyIEM2IDUyIDE0IDIwIDM2IDEwIEM1MiAzIDYwIDEyIDU4IDI2IEM1NCA0NCAzMiA1OCA2IDUyWiIgZmlsbD0iIzVhOWUzYSIvPgogIDxwYXRoIGQ9Ik0yMCAzOCBDMjQgMjQgMzQgMTQgNTAgMTAgQzU2IDggNjAgMTIgNTggMTggQzU0IDMwIDM4IDQyIDIwIDM4WiIgZmlsbD0iIzZhYjg0MCIgb3BhY2l0eT0iMC42Ii8+CiAgPHBhdGggZD0iTTYgNTIgQzIwIDQwIDM2IDI4IDU2IDEyIiBzdHJva2U9IiMzYTcwMjAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTE4IDQ2IEMyMiAzOCAyOCAzMiAzNCAyNiIgc3Ryb2tlPSIjM2E3MDIwIiBzdHJva2Utd2lkdGg9IjEuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBmaWxsPSJub25lIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNMTIgNTAgQzE3IDQyIDI0IDM2IDMwIDMwIiBzdHJva2U9IiMzYTcwMjAiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBmaWxsPSJub25lIiBvcGFjaXR5PSIwLjYiLz4KICA8cGF0aCBkPSJNNDIgMjIgQzQ0IDI4IDQ0IDM0IDQyIDQwIiBzdHJva2U9IiMzYTcwMjAiIHN0cm9rZS13aWR0aD0iMS4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik01MCAxNiBDNTIgMjIgNTIgMzAgNDggMzgiIHN0cm9rZT0iIzNhNzAyMCIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuNiIvPgo8L3N2Zz4=') 3 26, auto !important; }
         }
-        #cursor-folha {
-            position: fixed;
-            pointer-events: none;
-            z-index: 999999;
-            width: 32px;
-            height: 32px;
-            top: -100px;
-            left: -100px;
-            transform: translate(-14%, -85%) rotate(-35deg);
-            transition: transform 0.08s ease;
-        }
-        #cursor-folha.clicando {
-            transform: translate(-14%, -85%) rotate(-35deg) scale(0.78);
-        }
+        #cursor-folha { display: none; }
         .particula-folha {
             position: fixed;
             pointer-events: none;
@@ -3152,26 +3139,13 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         return '<ul class="info-topicos">' + html + '</ul>';
     }
 
-    /* ── CURSOR FOLHA & PARTÍCULAS SVG ── */
+    /* ── PARTÍCULAS DE FOLHAS AO CLICAR ── */
     (function() {
         if (!window.matchMedia('(pointer: fine)').matches) return;
-
-        const cursor = document.getElementById('cursor-folha');
-        if (!cursor) return;
         const FOLHAS = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjNDNhMDQ3Ii8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+"];
 
-        document.addEventListener('mousemove', e => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-
         document.addEventListener('mousedown', e => {
-            cursor.classList.add('clicando');
             criarParticulas(e.clientX, e.clientY);
-        });
-
-        document.addEventListener('mouseup', () => {
-            cursor.classList.remove('clicando');
         });
 
         function criarParticulas(x, y) {
@@ -3386,14 +3360,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         </div>
     </div>
 
-    <!-- CURSOR PERSONALIZADO -->
-    <svg id="cursor-folha" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 27 C5 27 9 11 21 7 C29 4 31 9 29 15 C26 23 15 27 5 27Z" fill="#2e7d32"/>
-        <path d="M5 27 C11 21 17 15 23 9" stroke="#a5d6a7" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <path d="M14 8 C11 15 8 21 5 27" stroke="#a5d6a7" stroke-width="0.8" stroke-linecap="round" fill="none"/>
-        <path d="M21 11 C17 18 11 23 5 27" stroke="#a5d6a7" stroke-width="0.8" stroke-linecap="round" fill="none"/>
-        <circle cx="5" cy="27" r="2" fill="#1b5e20"/>
-    </svg>
+    <!-- CURSOR: elemento visual seguindo o mouse -->
+    <div id="cursor-folha"></div>
 
     <!-- TOAST DE ERRO -->
     <div id="plantid-toast">

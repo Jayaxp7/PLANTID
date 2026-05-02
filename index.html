@@ -3141,12 +3141,18 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     /* ── PARTÍCULAS DE FOLHAS AO CLICAR ── */
     (function() {
-        if (!window.matchMedia('(pointer: fine)').matches) return;
+        const isMouse = window.matchMedia('(pointer: fine)').matches;
         const FOLHAS = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjNDNhMDQ3Ii8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+"];
 
         document.addEventListener('mousedown', e => {
             criarParticulas(e.clientX, e.clientY);
         });
+
+        // Partículas no touch (celular)
+        document.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            criarParticulas(t.clientX, t.clientY);
+        }, { passive: true });
 
         function criarParticulas(x, y) {
             const qtd = 8 + Math.floor(Math.random() * 6);

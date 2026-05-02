@@ -791,9 +791,10 @@
             z-index: 999999;
             width: 32px;
             height: 32px;
+            top: -100px;
+            left: -100px;
             transform: translate(-14%, -85%) rotate(-35deg);
             transition: transform 0.08s ease;
-            display: none;
         }
         #cursor-folha.clicando {
             transform: translate(-14%, -85%) rotate(-35deg) scale(0.78);
@@ -3157,8 +3158,6 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
         const cursor = document.getElementById('cursor-folha');
         if (!cursor) return;
-        cursor.style.display = 'block';
-
         const FOLHAS = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjNDNhMDQ3Ii8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+"];
 
         document.addEventListener('mousemove', e => {
@@ -3388,7 +3387,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     </div>
 
     <!-- CURSOR PERSONALIZADO -->
-    <svg id="cursor-folha" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display:none;position:fixed;pointer-events:none;z-index:999999;">
+    <svg id="cursor-folha" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 27 C5 27 9 11 21 7 C29 4 31 9 29 15 C26 23 15 27 5 27Z" fill="#2e7d32"/>
         <path d="M5 27 C11 21 17 15 23 9" stroke="#a5d6a7" stroke-width="1.2" stroke-linecap="round" fill="none"/>
         <path d="M14 8 C11 15 8 21 5 27" stroke="#a5d6a7" stroke-width="0.8" stroke-linecap="round" fill="none"/>

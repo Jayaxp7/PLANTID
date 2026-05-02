@@ -3072,34 +3072,51 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     function formatarInfoValue(texto) {
         if (!texto || texto === '—') return '<span class="info-value">—</span>';
 
-        var regex = /(?:^|[.]\s)([A-ZÀ-ÿ][^:.]{1,40}):\s/g;
-        var matches = [];
-        var m;
-        while ((m = regex.exec(texto)) !== null) matches.push(m);
+        // Divide o texto por ". Palavra:" para encontrar os tópicos
+        // Usa split com regex para separar corretamente
+        var partes = texto.split(/(?<=\.)\s+(?=[A-ZÀ-ÿ][^:.]{1,40}:\s)/);
 
-        if (matches.length < 2) {
-            return '<span class="info-value">' + texto + '</span>';
+        // Se não conseguiu dividir, tenta outro padrão
+        if (partes.length < 2) {
+            // Tenta dividir por qualquer "Palavra: " no início ou após ponto
+            partes = [];
+            var regexSplit = /([A-ZÀ-ÿ][^:.]{1,40}):\s/g;
+            var lastIndex = 0;
+            var sm;
+            var segmentos = [];
+            while ((sm = regexSplit.exec(texto)) !== null) {
+                segmentos.push({ chave: sm[1].trim(), inicioValor: sm.index + sm[0].length });
+            }
+            if (segmentos.length < 2) return '<span class="info-value">' + texto + '</span>';
+
+            var topicos2 = segmentos.map(function(seg, i) {
+                var fim = i + 1 < segmentos.length ? segmentos[i+1].inicioValor - segmentos[i+1].chave.length - 2 : texto.length;
+                var valor = texto.slice(seg.inicioValor, fim).trim().replace(/\.\s*$/, '').trim();
+                return { chave: seg.chave, valor: valor };
+            }).filter(function(t) { return t.chave && t.valor; });
+
+            if (topicos2.length === 0) return '<span class="info-value">' + texto + '</span>';
+            var html2 = topicos2.map(function(t) {
+                return '<li class="info-topico"><span class="info-topico-chave">' + t.chave + ':</span> <span class="info-topico-valor">' + t.valor + '</span></li>';
+            }).join('');
+            return '<ul class="info-topicos">' + html2 + '</ul>';
         }
 
-        var topicos = [];
-        matches.forEach(function(match, i) {
-            var offset = match[0].charAt(0) === '.' ? 2 : 0;
-            var inicio = match.index + offset;
-            var fimChave = inicio + match[0].trim().length;
-            var fim = i + 1 < matches.length
-                ? matches[i + 1].index + (matches[i + 1][0].charAt(0) === '.' ? 1 : 0)
-                : texto.length;
-            var chave = match[1].trim();
-            var valor = texto.slice(fimChave, fim).trim().replace(/[.]\s*$/, '').trim();
-            if (chave && valor) topicos.push({ chave: chave, valor: valor });
-        });
+        // Processa cada parte: "Chave: valor"
+        var topicos = partes.map(function(parte) {
+            var idx = parte.indexOf(': ');
+            if (idx === -1) idx = parte.indexOf(':');
+            if (idx === -1) return null;
+            var chave = parte.slice(0, idx).trim();
+            var valor = parte.slice(idx + 2).trim().replace(/\.\s*$/, '').trim();
+            return (chave && valor) ? { chave: chave, valor: valor } : null;
+        }).filter(Boolean);
 
         if (topicos.length === 0) return '<span class="info-value">' + texto + '</span>';
 
         var html = topicos.map(function(t) {
             return '<li class="info-topico"><span class="info-topico-chave">' + t.chave + ':</span> <span class="info-topico-valor">' + t.valor + '</span></li>';
         }).join('');
-
         return '<ul class="info-topicos">' + html + '</ul>';
     }
 

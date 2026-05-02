@@ -781,6 +781,37 @@
         }
         .balloon-close:hover { color: #555; }
 
+        /* ── CURSOR PERSONALIZADO & PARTÍCULAS ── */
+        @media (pointer: fine) {
+            * { cursor: none !important; }
+        }
+        #cursor-folha {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999999;
+            width: 32px;
+            height: 32px;
+            transform: translate(-14%, -85%) rotate(-35deg);
+            transition: transform 0.08s ease;
+            display: none;
+        }
+        #cursor-folha.clicando {
+            transform: translate(-14%, -85%) rotate(-35deg) scale(0.78);
+        }
+        .particula-folha {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999998;
+            width: var(--sz);
+            height: var(--sz);
+            animation: particulaVoar var(--dur) ease-out forwards;
+            transform-origin: center;
+        }
+        @keyframes particulaVoar {
+            0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.2); }
+        }
+
         /* ── HERB SEARCH ── */
         .herb-search-wrap {
             position: relative;
@@ -3120,6 +3151,59 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         return '<ul class="info-topicos">' + html + '</ul>';
     }
 
+    /* ── CURSOR FOLHA & PARTÍCULAS SVG ── */
+    (function() {
+        if (!window.matchMedia('(pointer: fine)').matches) return;
+
+        const cursor = document.getElementById('cursor-folha');
+        if (!cursor) return;
+        cursor.style.display = 'block';
+
+        const FOLHAS = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjNDNhMDQ3Ii8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+"];
+
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mousedown', e => {
+            cursor.classList.add('clicando');
+            criarParticulas(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            cursor.classList.remove('clicando');
+        });
+
+        function criarParticulas(x, y) {
+            const qtd = 8 + Math.floor(Math.random() * 6);
+            for (let i = 0; i < qtd; i++) {
+                const p = document.createElement('img');
+                p.className = 'particula-folha';
+                p.src = FOLHAS[Math.floor(Math.random() * FOLHAS.length)];
+
+                const angulo = (Math.PI * 2 / qtd) * i + (Math.random() - 0.5) * 1.0;
+                const dist = 35 + Math.random() * 70;
+                const dx = Math.cos(angulo) * dist;
+                const dy = Math.sin(angulo) * dist - 30;
+                const rot = (Math.random() - 0.5) * 540;
+                const sz = (10 + Math.random() * 12) + 'px';
+                const dur = (0.5 + Math.random() * 0.4) + 's';
+
+                p.style.cssText = `left:${x}px;top:${y}px;`;
+                p.style.setProperty('--dx', dx + 'px');
+                p.style.setProperty('--dy', dy + 'px');
+                p.style.setProperty('--rot', rot + 'deg');
+                p.style.setProperty('--sz', sz);
+                p.style.setProperty('--dur', dur);
+                p.style.animationDelay = (Math.random() * 0.08) + 's';
+
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 900);
+            }
+        }
+    })();
+
     /* ── FLOATING LEAVES ENGINE ── */
     (function() {
         const wrap = document.getElementById('floating-leaves-wrap');
@@ -3302,6 +3386,15 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             </label>
         </div>
     </div>
+
+    <!-- CURSOR PERSONALIZADO -->
+    <svg id="cursor-folha" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="display:none;position:fixed;pointer-events:none;z-index:999999;">
+        <path d="M5 27 C5 27 9 11 21 7 C29 4 31 9 29 15 C26 23 15 27 5 27Z" fill="#2e7d32"/>
+        <path d="M5 27 C11 21 17 15 23 9" stroke="#a5d6a7" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M14 8 C11 15 8 21 5 27" stroke="#a5d6a7" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+        <path d="M21 11 C17 18 11 23 5 27" stroke="#a5d6a7" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+        <circle cx="5" cy="27" r="2" fill="#1b5e20"/>
+    </svg>
 
     <!-- TOAST DE ERRO -->
     <div id="plantid-toast">

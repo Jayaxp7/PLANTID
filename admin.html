@@ -81,6 +81,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-rejeitar{padding:7px 18px;background:none;border:1.5px solid #e57373;border-radius:10px;font-size:.82rem;font-weight:600;color:#c62828;cursor:pointer;transition:background .2s;}
 .btn-rejeitar:hover{background:#ffebee;}
 .btn-rejeitar:disabled{opacity:.5;cursor:not-allowed;}
+.btn-editar{padding:7px 18px;background:none;border:1.5px solid #f9a825;border-radius:10px;font-size:.82rem;font-weight:600;color:#e65100;cursor:pointer;transition:background .2s;}
+.btn-editar:hover{background:#fff8e1;}
 .mod-card.processando{opacity:.5;pointer-events:none;}
 .table-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);margin-bottom:32px;overflow-x:auto;}
 .table-card table{width:100%;border-collapse:collapse;font-size:.88rem;}
@@ -572,8 +574,15 @@ async function carregarModeracaoGlossario() {
                 </div>
                 <div class="mod-def">${d.def}</div>
                 <div class="mod-meta">Sugerido por <strong>${d.autorNome || 'Usuário'}</strong> em ${data}</div>
+                <div class="mod-edit-form" id="editform-${doc.id}" style="display:none; margin-top:12px;">
+                    <input type="text" id="edit-termo-${doc.id}" value="${d.termo}" placeholder="Termo" style="width:100%;margin-bottom:6px;padding:6px 10px;border:1px solid #c8e6c9;border-radius:6px;font-size:.9rem;">
+                    <input type="text" id="edit-cat-${doc.id}" value="${d.cat || 'Geral'}" placeholder="Categoria" style="width:100%;margin-bottom:6px;padding:6px 10px;border:1px solid #c8e6c9;border-radius:6px;font-size:.9rem;">
+                    <textarea id="edit-def-${doc.id}" placeholder="Definição" style="width:100%;margin-bottom:6px;padding:6px 10px;border:1px solid #c8e6c9;border-radius:6px;font-size:.9rem;resize:vertical;min-height:70px;">${d.def}</textarea>
+                    <button class="btn-aprovar" onclick="modAprovarEditado('${doc.id}')" style="width:100%;">✓ Salvar e Aprovar</button>
+                </div>
                 <div class="mod-actions">
                     <button class="btn-rejeitar" onclick="modRejeitar('${doc.id}')">✕ Rejeitar</button>
+                    <button class="btn-editar"   onclick="modToggleEditar('${doc.id}')">✎ Editar</button>
                     <button class="btn-aprovar"  onclick="modAprovar('${doc.id}')">✓ Aprovar</button>
                 </div>
             `;
@@ -583,6 +592,44 @@ async function carregarModeracaoGlossario() {
     } catch(e) {
         loading.style.display = 'none';
         lista.innerHTML = '<p style="color:#c62828;text-align:center;padding:32px 0;font-size:.85rem;">Erro: ' + e.message + '</p>';
+    }
+}
+
+function modToggleEditar(docId) {
+    const form = document.getElementById('editform-' + docId);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function modAprovarEditado(docId) {
+    const termo = document.getElementById('edit-termo-' + docId).value.trim();
+    const cat   = document.getElementById('edit-cat-'   + docId).value.trim();
+    const def   = document.getElementById('edit-def-'   + docId).value.trim();
+    if (!termo || !def) { alert('Preencha o termo e a definição.'); return; }
+
+    const card = document.getElementById('modcard-' + docId);
+    if (card) card.classList.add('processando');
+    try {
+        const docRef = firebase.firestore().collection('glossario_pendente').doc(docId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) throw new Error('Não encontrado');
+        const d = docSnap.data();
+
+        await firebase.firestore().collection('glossario').add({
+            termo, cat: cat || 'Geral', def,
+            aprovado: true, autor: d.autor || null, autorNome: d.autorNome || null,
+            aprovadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await docRef.delete();
+
+        if (card) card.remove();
+        modAtualizarBadge(-1);
+        if (!document.getElementById('mod-lista').children.length)
+            document.getElementById('mod-vazio').style.display = 'block';
+
+        alert(`✅ "${termo}" editado e aprovado!`);
+    } catch(e) {
+        if (card) card.classList.remove('processando');
+        alert('Erro ao salvar: ' + e.message);
     }
 }
 

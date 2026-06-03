@@ -61,6 +61,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .chart-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);}
 .chart-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:20px;}
 .chart-wrap{position:relative;height:260px;}
+/* ── MODERAÇÃO ── */
+.mod-section{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);margin-bottom:32px;}
+.mod-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.mod-header .chart-title{margin-bottom:0;}
+.mod-badge{background:#c62828;color:#fff;border-radius:99px;font-size:.75rem;padding:2px 10px;font-weight:700;display:none;}
+.mod-empty{text-align:center;padding:40px 20px;color:var(--soft);font-size:.9rem;}
+.mod-card{border:1.5px solid #e8f5e9;border-radius:14px;padding:18px 20px;margin-bottom:14px;}
+.mod-card:last-child{margin-bottom:0;}
+.mod-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;}
+.mod-termo{font-weight:700;font-size:1rem;color:#1b5e20;}
+.mod-cat{background:#e8f5e9;color:#2e7d32;border-radius:99px;font-size:.72rem;font-weight:700;padding:2px 10px;white-space:nowrap;}
+.mod-def{font-size:.86rem;color:#555;line-height:1.6;margin-bottom:10px;}
+.mod-meta{font-size:.75rem;color:#888;margin-bottom:12px;}
+.mod-actions{display:flex;gap:8px;justify-content:flex-end;}
+.btn-aprovar{padding:7px 18px;background:#2e7d32;border:none;border-radius:10px;font-size:.82rem;font-weight:700;color:#fff;cursor:pointer;transition:background .2s;}
+.btn-aprovar:hover{background:#1b5e20;}
+.btn-aprovar:disabled{opacity:.5;cursor:not-allowed;}
+.btn-rejeitar{padding:7px 18px;background:none;border:1.5px solid #e57373;border-radius:10px;font-size:.82rem;font-weight:600;color:#c62828;cursor:pointer;transition:background .2s;}
+.btn-rejeitar:hover{background:#ffebee;}
+.btn-rejeitar:disabled{opacity:.5;cursor:not-allowed;}
+.mod-card.processando{opacity:.5;pointer-events:none;}
 .table-card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(165,214,167,.2);margin-bottom:32px;overflow-x:auto;}
 .table-card table{width:100%;border-collapse:collapse;font-size:.88rem;}
 .table-card th{text-align:left;padding:10px 14px;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--soft);border-bottom:2px solid #e8f5e9;}
@@ -249,6 +270,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <tbody id="tabela-body"></tbody>
         </table>
       </div>
+
+      <!-- MODERAÇÃO DO GLOSSÁRIO -->
+      <div class="mod-section">
+        <div class="mod-header">
+          <div class="chart-title">📖 Moderação do Glossário</div>
+          <span class="mod-badge" id="mod-badge">0 pendentes</span>
+        </div>
+        <div id="mod-loading" class="mod-empty">⏳ Carregando sugestões...</div>
+        <div id="mod-vazio" class="mod-empty" style="display:none;">✅ Nenhuma sugestão pendente no momento.</div>
+        <div id="mod-lista"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -379,6 +412,7 @@ async function iniciarPainel(){
 function renderizarPainel(dados){
   document.getElementById('loading').style.display='none';
   document.getElementById('conteudo').style.display='block';
+  carregarModeracaoGlossario();
   const total=dados.length;
   const corretas=dados.filter(d=>d.confirmada===true).length;
   const incorretas=dados.filter(d=>d.confirmada===false).length;
@@ -491,6 +525,125 @@ function iniciarMapa(porEstado){
       `;
     });
   });
+}
+
+// ─── MODERAÇÃO DO GLOSSÁRIO ───────────────────────────────────────────────
+async function carregarModeracaoGlossario() {
+    const loading = document.getElementById('mod-loading');
+    const vazio   = document.getElementById('mod-vazio');
+    const lista   = document.getElementById('mod-lista');
+    const badge   = document.getElementById('mod-badge');
+
+    if (!loading) return;
+    loading.style.display = 'block';
+    vazio.style.display   = 'none';
+    lista.innerHTML       = '';
+
+    try {
+        await loadFirebase();
+        const snap = await window._fbDB.collection('glossario_pendente')
+            .where('aprovado', '==', false)
+            .orderBy('sugeridoEm', 'desc')
+            .get();
+
+        loading.style.display = 'none';
+
+        if (snap.empty) {
+            vazio.style.display = 'block';
+            badge.style.display = 'none';
+            return;
+        }
+
+        badge.textContent   = snap.size + ' pendente' + (snap.size > 1 ? 's' : '');
+        badge.style.display = 'inline';
+
+        snap.forEach(doc => {
+            const d    = doc.data();
+            const data = d.sugeridoEm
+                ? new Date(d.sugeridoEm.seconds * 1000).toLocaleDateString('pt-BR')
+                : '—';
+
+            const card = document.createElement('div');
+            card.className = 'mod-card';
+            card.id = 'modcard-' + doc.id;
+            card.innerHTML = `
+                <div class="mod-card-top">
+                    <div class="mod-termo">${d.termo}</div>
+                    <span class="mod-cat">${d.cat || 'Geral'}</span>
+                </div>
+                <div class="mod-def">${d.def}</div>
+                <div class="mod-meta">Sugerido por <strong>${d.autorNome || 'Usuário'}</strong> em ${data}</div>
+                <div class="mod-actions">
+                    <button class="btn-rejeitar" onclick="modRejeitar('${doc.id}')">✕ Rejeitar</button>
+                    <button class="btn-aprovar"  onclick="modAprovar('${doc.id}')">✓ Aprovar</button>
+                </div>
+            `;
+            lista.appendChild(card);
+        });
+
+    } catch(e) {
+        loading.style.display = 'none';
+        lista.innerHTML = '<p style="color:#c62828;text-align:center;padding:32px 0;">Erro ao carregar. Verifique a conexão.</p>';
+        console.error(e);
+    }
+}
+
+async function modAprovar(docId) {
+    const card = document.getElementById('modcard-' + docId);
+    if (card) card.classList.add('processando');
+    try {
+        await loadFirebase();
+        const docRef  = window._fbDB.collection('glossario_pendente').doc(docId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) throw new Error('Não encontrado');
+        const d = docSnap.data();
+
+        await window._fbDB.collection('glossario').add({
+            termo: d.termo, cat: d.cat || 'Geral', def: d.def,
+            aprovado: true, autor: d.autor || null, autorNome: d.autorNome || null,
+            aprovadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await docRef.delete();
+
+        if (card) card.remove();
+        modAtualizarBadge(-1);
+        if (!document.getElementById('mod-lista').children.length)
+            document.getElementById('mod-vazio').style.display = 'block';
+
+        alert(`✅ "${d.termo}" aprovado e adicionado ao glossário!`);
+    } catch(e) {
+        if (card) card.classList.remove('processando');
+        alert('Erro ao aprovar: ' + e.message);
+    }
+}
+
+async function modRejeitar(docId) {
+    if (!confirm('Rejeitar esta sugestão? Ela será removida permanentemente.')) return;
+    const card = document.getElementById('modcard-' + docId);
+    if (card) card.classList.add('processando');
+    try {
+        await loadFirebase();
+        await window._fbDB.collection('glossario_pendente').doc(docId).delete();
+        if (card) card.remove();
+        modAtualizarBadge(-1);
+        if (!document.getElementById('mod-lista').children.length)
+            document.getElementById('mod-vazio').style.display = 'block';
+    } catch(e) {
+        if (card) card.classList.remove('processando');
+        alert('Erro ao rejeitar: ' + e.message);
+    }
+}
+
+function modAtualizarBadge(delta) {
+    const badge  = document.getElementById('mod-badge');
+    const texto  = badge.textContent || '';
+    const atual  = parseInt(texto) + delta;
+    if (atual > 0) {
+        badge.textContent   = atual + ' pendente' + (atual > 1 ? 's' : '');
+        badge.style.display = 'inline';
+    } else {
+        badge.style.display = 'none';
+    }
 }
 </script>
 </body>

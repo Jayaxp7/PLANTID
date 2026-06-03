@@ -543,7 +543,6 @@ async function carregarModeracaoGlossario() {
         await loadFirebase();
         const snap = await window._fbDB.collection('glossario_pendente')
             .where('aprovado', '==', false)
-            .orderBy('sugeridoEm', 'desc')
             .get();
 
         loading.style.display = 'none';

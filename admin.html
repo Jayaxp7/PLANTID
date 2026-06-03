@@ -540,8 +540,8 @@ async function carregarModeracaoGlossario() {
     lista.innerHTML       = '';
 
     try {
-        await loadFirebase();
-        const snap = await window._fbDB.collection('glossario_pendente')
+        
+        const snap = await firebase.firestore().collection('glossario_pendente')
             .where('aprovado', '==', false)
             .get();
 
@@ -590,13 +590,13 @@ async function modAprovar(docId) {
     const card = document.getElementById('modcard-' + docId);
     if (card) card.classList.add('processando');
     try {
-        await loadFirebase();
-        const docRef  = window._fbDB.collection('glossario_pendente').doc(docId);
+        
+        const docRef  = firebase.firestore().collection('glossario_pendente').doc(docId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) throw new Error('Não encontrado');
         const d = docSnap.data();
 
-        await window._fbDB.collection('glossario').add({
+        await firebase.firestore().collection('glossario').add({
             termo: d.termo, cat: d.cat || 'Geral', def: d.def,
             aprovado: true, autor: d.autor || null, autorNome: d.autorNome || null,
             aprovadoEm: firebase.firestore.FieldValue.serverTimestamp()
@@ -620,8 +620,8 @@ async function modRejeitar(docId) {
     const card = document.getElementById('modcard-' + docId);
     if (card) card.classList.add('processando');
     try {
-        await loadFirebase();
-        await window._fbDB.collection('glossario_pendente').doc(docId).delete();
+        
+        await firebase.firestore().collection('glossario_pendente').doc(docId).delete();
         if (card) card.remove();
         modAtualizarBadge(-1);
         if (!document.getElementById('mod-lista').children.length)

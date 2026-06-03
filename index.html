@@ -977,6 +977,170 @@
         body.dark-mode .glossario-item-def { color: #e8f5e9; }
         body.dark-mode .glossario-noresult { color: #5a7a5a; }
 
+        /* ── Modal Sugerir Termo ── */
+        .sugerir-btn-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .btn-sugerir-termo {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            background: transparent;
+            border: 1.5px solid var(--primary-light);
+            color: var(--primary-light);
+            border-radius: var(--radius-btn);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-sugerir-termo:hover { background: var(--primary-light); color: #fff; }
+        body.dark-mode .btn-sugerir-termo { border-color: #81c784; color: #81c784; }
+        body.dark-mode .btn-sugerir-termo:hover { background: #81c784; color: #1a2e1b; }
+
+        #modal-sugerir-termo {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #modal-sugerir-termo.aberto { display: flex; }
+        .sugerir-card {
+            background: var(--glass);
+            border-radius: var(--radius-card);
+            padding: 32px 28px 28px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: var(--shadow-hover);
+            position: relative;
+        }
+        body.dark-mode .sugerir-card { background: #1e2b1e; }
+        .sugerir-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        body.dark-mode .sugerir-card h3 { color: #e8f5e9; }
+        .sugerir-card .sugerir-sub {
+            font-size: 0.82rem;
+            color: var(--text-soft);
+            margin-bottom: 22px;
+        }
+        .sugerir-fechar {
+            position: absolute;
+            top: 14px; right: 16px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text-soft);
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+        .sugerir-fechar:hover { color: var(--text-dark); }
+        body.dark-mode .sugerir-fechar:hover { color: #e8f5e9; }
+        .sugerir-campo {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 16px;
+        }
+        .sugerir-campo label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-mid);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        body.dark-mode .sugerir-campo label { color: #81c784; }
+        .sugerir-campo input,
+        .sugerir-campo select,
+        .sugerir-campo textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--accent-soft);
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            color: var(--text-dark);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+            resize: none;
+        }
+        .sugerir-campo input:focus,
+        .sugerir-campo select:focus,
+        .sugerir-campo textarea:focus { border-color: var(--primary-light); }
+        body.dark-mode .sugerir-campo input,
+        body.dark-mode .sugerir-campo select,
+        body.dark-mode .sugerir-campo textarea {
+            background: #162016;
+            border-color: #2e4a2e;
+            color: #e8f5e9;
+        }
+        body.dark-mode .sugerir-campo input:focus,
+        body.dark-mode .sugerir-campo select:focus,
+        body.dark-mode .sugerir-campo textarea:focus { border-color: #81c784; }
+        .sugerir-erro {
+            font-size: 0.8rem;
+            color: #c62828;
+            margin-top: -10px;
+            margin-bottom: 8px;
+            display: none;
+        }
+        body.dark-mode .sugerir-erro { color: #ef9a9a; }
+        .sugerir-aviso-login {
+            text-align: center;
+            padding: 20px 0 8px;
+            font-size: 0.9rem;
+            color: var(--text-mid);
+        }
+        body.dark-mode .sugerir-aviso-login { color: #81c784; }
+        .sugerir-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+        .btn-sugerir-cancelar {
+            padding: 9px 20px;
+            background: none;
+            border: 1.5px solid var(--accent-soft);
+            border-radius: var(--radius-btn);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-mid);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-sugerir-cancelar:hover { background: var(--kraft-dark); }
+        body.dark-mode .btn-sugerir-cancelar { border-color: #2e4a2e; color: #81c784; }
+        body.dark-mode .btn-sugerir-cancelar:hover { background: #1e2b1e; }
+        .btn-sugerir-enviar {
+            padding: 9px 22px;
+            background: var(--primary-light);
+            border: none;
+            border-radius: var(--radius-btn);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-sugerir-enviar:hover { background: var(--primary); }
+        .btn-sugerir-enviar:disabled { opacity: 0.6; cursor: not-allowed; }
+
         /* ── PALAVRAS DO GLOSSÁRIO ── */
         .glossario-link {
             color: var(--primary);
@@ -1731,6 +1895,12 @@
             <input type="text" id="glossario-search" class="glossario-search"
                 placeholder="Buscar termo botânico..."
                 oninput="filtrarGlossario(this.value)">
+        </div>
+
+        <div class="sugerir-btn-wrap">
+            <button class="btn-sugerir-termo" onclick="abrirModalSugerirTermo()">
+                ＋ Sugerir termo
+            </button>
         </div>
 
         <div class="glossario-letras" id="glossario-letras"></div>
@@ -3053,6 +3223,111 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }
     }
 
+    // ─── GLOSSÁRIO: SUGERIR TERMO ─────────────────────────────────────────────
+    function abrirModalSugerirTermo() {
+        const modal = document.getElementById('modal-sugerir-termo');
+        const semLogin = document.getElementById('sugerir-sem-login');
+        const formWrap = document.getElementById('sugerir-form-wrap');
+
+        // Limpar campos e erros
+        document.getElementById('sugerir-input-termo').value = '';
+        document.getElementById('sugerir-input-def').value = '';
+        document.getElementById('sugerir-input-cat').value = 'Morfologia';
+        document.getElementById('sugerir-erro-termo').style.display = 'none';
+        document.getElementById('sugerir-erro-def').style.display = 'none';
+        document.getElementById('btn-enviar-sugestao').disabled = false;
+
+        if (window._currentUser) {
+            semLogin.style.display = 'none';
+            formWrap.style.display = 'block';
+        } else {
+            semLogin.style.display = 'block';
+            formWrap.style.display = 'none';
+        }
+
+        modal.classList.add('aberto');
+    }
+
+    function fecharModalSugerirTermo() {
+        document.getElementById('modal-sugerir-termo').classList.remove('aberto');
+    }
+
+    function fecharModalSugerirTermoFora(event) {
+        if (event.target === document.getElementById('modal-sugerir-termo')) {
+            fecharModalSugerirTermo();
+        }
+    }
+
+    async function enviarSugestaoTermo() {
+        const termoEl = document.getElementById('sugerir-input-termo');
+        const defEl = document.getElementById('sugerir-input-def');
+        const catEl = document.getElementById('sugerir-input-cat');
+        const erroTermoEl = document.getElementById('sugerir-erro-termo');
+        const erroDefEl = document.getElementById('sugerir-erro-def');
+        const btnEnviar = document.getElementById('btn-enviar-sugestao');
+
+        const termo = termoEl.value.trim();
+        const def = defEl.value.trim();
+        const cat = catEl.value;
+
+        // Reset erros
+        erroTermoEl.style.display = 'none';
+        erroDefEl.style.display = 'none';
+
+        // Validações
+        let valido = true;
+
+        if (!termo || termo.length < 2) {
+            erroTermoEl.textContent = 'Digite um termo válido (mínimo 2 caracteres).';
+            erroTermoEl.style.display = 'block';
+            valido = false;
+        } else {
+            const jaExiste = window.GLOSSARIO.some(
+                g => g.termo.toLowerCase() === termo.toLowerCase()
+            );
+            if (jaExiste) {
+                erroTermoEl.textContent = 'Este termo já existe no glossário.';
+                erroTermoEl.style.display = 'block';
+                valido = false;
+            }
+        }
+
+        if (!def || def.length < 20) {
+            erroDefEl.textContent = 'A definição precisa ter pelo menos 20 caracteres.';
+            erroDefEl.style.display = 'block';
+            valido = false;
+        }
+
+        if (!valido) return;
+
+        btnEnviar.disabled = true;
+        btnEnviar.textContent = 'Enviando...';
+
+        try {
+            await loadFirebase();
+            await window._fbDB.collection('glossario_pendente').add({
+                termo: termo,
+                cat: cat,
+                def: def,
+                aprovado: false,
+                autor: window._currentUser.uid,
+                autorNome: window._currentUser.displayName || 'Usuário',
+                sugeridoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            fecharModalSugerirTermo();
+            showToast('info', '🌿', 'Sugestão enviada!',
+                `"${termo}" foi enviado para revisão. Obrigado pela contribuição!`);
+
+        } catch (e) {
+            console.error('Erro ao enviar sugestão:', e);
+            btnEnviar.disabled = false;
+            btnEnviar.textContent = 'Enviar sugestão';
+            showToast('warn', '⚠️', 'Erro ao enviar',
+                'Não foi possível enviar sua sugestão. Tente novamente.');
+        }
+    }
+
     async function iniciarGlossario() {
         await sincronizarGlossarioFirestore();
         const letrasUnicas = [...new Set(window.GLOSSARIO.map(g => g.termo[0].toUpperCase()))].sort();
@@ -3404,6 +3679,55 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     <!-- CURSOR: elemento visual seguindo o mouse -->
     <div id="cursor-folha"></div>
+
+    <!-- MODAL SUGERIR TERMO -->
+    <div id="modal-sugerir-termo" onclick="fecharModalSugerirTermoFora(event)">
+        <div class="sugerir-card">
+            <button class="sugerir-fechar" onclick="fecharModalSugerirTermo()">×</button>
+
+            <!-- Conteúdo para usuário NÃO logado -->
+            <div id="sugerir-sem-login">
+                <h3>Sugerir termo</h3>
+                <p class="sugerir-aviso-login">🔐 Faça login para sugerir novos termos ao glossário.</p>
+            </div>
+
+            <!-- Formulário para usuário logado -->
+            <div id="sugerir-form-wrap" style="display:none;">
+                <h3>Sugerir novo termo</h3>
+                <p class="sugerir-sub">Sua sugestão será revisada antes de aparecer no glossário.</p>
+
+                <div class="sugerir-campo">
+                    <label>Termo</label>
+                    <input type="text" id="sugerir-input-termo" placeholder="Ex: Mesófilo" maxlength="80">
+                </div>
+                <div class="sugerir-erro" id="sugerir-erro-termo"></div>
+
+                <div class="sugerir-campo">
+                    <label>Categoria</label>
+                    <select id="sugerir-input-cat">
+                        <option value="Morfologia">Morfologia</option>
+                        <option value="Reprodução">Reprodução</option>
+                        <option value="Fisiologia">Fisiologia</option>
+                        <option value="Ecologia">Ecologia</option>
+                        <option value="Taxonomia">Taxonomia</option>
+                        <option value="Cultivo">Cultivo</option>
+                        <option value="Geral">Geral</option>
+                    </select>
+                </div>
+
+                <div class="sugerir-campo">
+                    <label>Definição</label>
+                    <textarea id="sugerir-input-def" rows="4" placeholder="Descreva o termo de forma clara e objetiva..." maxlength="600"></textarea>
+                </div>
+                <div class="sugerir-erro" id="sugerir-erro-def"></div>
+
+                <div class="sugerir-actions">
+                    <button class="btn-sugerir-cancelar" onclick="fecharModalSugerirTermo()">Cancelar</button>
+                    <button class="btn-sugerir-enviar" id="btn-enviar-sugestao" onclick="enviarSugestaoTermo()">Enviar sugestão</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- TOAST DE ERRO -->
     <div id="plantid-toast">

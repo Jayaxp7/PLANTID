@@ -2544,7 +2544,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     function destacarTermosGlossario() {
         if (!window.GLOSSARIO || !window.GLOSSARIO.length) return;
         // Monta regex com todos os termos — palavra exata, case-insensitive
-        const termos = window.window.GLOSSARIO.map(g => g.termo);
+        const termos = window.GLOSSARIO.map(g => g.termo);
         const regex = new RegExp(
             '\\b(' + termos.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
             'gi'

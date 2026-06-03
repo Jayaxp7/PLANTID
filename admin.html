@@ -582,8 +582,7 @@ async function carregarModeracaoGlossario() {
 
     } catch(e) {
         loading.style.display = 'none';
-        lista.innerHTML = '<p style="color:#c62828;text-align:center;padding:32px 0;">Erro ao carregar. Verifique a conexão.</p>';
-        console.error(e);
+        lista.innerHTML = '<p style="color:#c62828;text-align:center;padding:32px 0;font-size:.85rem;">Erro: ' + e.message + '</p>';
     }
 }
 

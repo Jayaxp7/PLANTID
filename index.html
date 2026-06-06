@@ -1883,17 +1883,16 @@
         </div>
 
         <div class="card">
-            <div class="upload-box" id="upload-box-main" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-box" id="upload-box-main" onclick="abrirGaleria()">
                 <span class="upload-icon">📸</span>
                 <div class="upload-title">Enviar da galeria ou câmera</div>
                 <div class="upload-sub">JPG, PNG, HEIC — qualquer resolução</div>
                 <input type="file" id="fileInput" accept="image/*" hidden>
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                 <img id="preview">
             </div>
             <div class="upload-btns-row" id="upload-btns-row">
-                <button class="upload-btn-opt" onclick="document.getElementById('cameraInput').click()">📷 Usar câmera</button>
-                <button class="upload-btn-opt" onclick="document.getElementById('fileInput').click()">🖼️ Galeria</button>
+                <button class="upload-btn-opt" onclick="abrirCamera()">📷 Usar câmera</button>
+                <button class="upload-btn-opt" onclick="abrirGaleria()">🖼️ Galeria</button>
             </div>
             <button class="btn-scan" id="runBtn" disabled>⬡ Iniciar Análise Botânica</button>
             <div id="status-ia"></div>
@@ -2030,7 +2029,18 @@
 
     /* ─── COMPRESSÃO DE IMAGEM ─── */
     document.getElementById('fileInput').onchange = handleImageInput;
-    document.getElementById('cameraInput').onchange = handleImageInput;
+
+    function abrirCamera() {
+        const inp = document.getElementById('fileInput');
+        inp.setAttribute('capture', 'environment');
+        inp.click();
+    }
+
+    function abrirGaleria() {
+        const inp = document.getElementById('fileInput');
+        inp.removeAttribute('capture');
+        inp.click();
+    }
 
     function handleImageInput(e) {
         const file = e.target.files[0];

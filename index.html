@@ -2031,14 +2031,27 @@
     document.getElementById('fileInput').onchange = handleImageInput;
 
     function abrirCamera() {
-        const inp = document.getElementById('fileInput');
+        const old = document.getElementById('fileInput');
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
         inp.setAttribute('capture', 'environment');
+        inp.id = 'fileInput';
+        inp.hidden = true;
+        inp.onchange = handleImageInput;
+        old.parentNode.replaceChild(inp, old);
         inp.click();
     }
 
     function abrirGaleria() {
-        const inp = document.getElementById('fileInput');
-        inp.removeAttribute('capture');
+        const old = document.getElementById('fileInput');
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.id = 'fileInput';
+        inp.hidden = true;
+        inp.onchange = handleImageInput;
+        old.parentNode.replaceChild(inp, old);
         inp.click();
     }
 

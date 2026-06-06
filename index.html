@@ -3019,8 +3019,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         // Genérico
         } else {
             showToast('', '⚠️', 'Algo deu errado',
-                'Ocorreu um erro inesperado. Tente novamente em alguns instantes.',
-                { duracao: 6000 });
+                'Erro: ' + (msg || 'desconhecido'),
+                { duracao: 10000 });
         }
     }
 

@@ -1883,7 +1883,7 @@
         </div>
 
         <div class="card">
-            <div class="upload-box" id="upload-box-main">
+            <div class="upload-box" id="upload-box-main" onclick="abrirGaleria()">
                 <span class="upload-icon">📸</span>
                 <div class="upload-title">Enviar da galeria ou câmera</div>
                 <div class="upload-sub">JPG, PNG, HEIC — qualquer resolução</div>
@@ -1891,8 +1891,8 @@
                 <img id="preview">
             </div>
             <div class="upload-btns-row" id="upload-btns-row">
-                <button class="upload-btn-opt" onclick="event.stopPropagation();abrirCamera()">📷 Usar câmera</button>
-                <button class="upload-btn-opt" onclick="event.stopPropagation();abrirGaleria()">🖼️ Galeria</button>
+                <button class="upload-btn-opt" onclick="abrirCamera()">📷 Usar câmera</button>
+                <button class="upload-btn-opt" onclick="abrirGaleria()">🖼️ Galeria</button>
             </div>
             <button class="btn-scan" id="runBtn" disabled>⬡ Iniciar Análise Botânica</button>
             <div id="status-ia"></div>
@@ -2031,27 +2031,14 @@
     document.getElementById('fileInput').onchange = handleImageInput;
 
     function abrirCamera() {
-        const old = document.getElementById('fileInput');
-        const inp = document.createElement('input');
-        inp.type = 'file';
-        inp.accept = 'image/*';
+        const inp = document.getElementById('fileInput');
         inp.setAttribute('capture', 'environment');
-        inp.id = 'fileInput';
-        inp.hidden = true;
-        inp.onchange = handleImageInput;
-        old.parentNode.replaceChild(inp, old);
         inp.click();
     }
 
     function abrirGaleria() {
-        const old = document.getElementById('fileInput');
-        const inp = document.createElement('input');
-        inp.type = 'file';
-        inp.accept = 'image/*';
-        inp.id = 'fileInput';
-        inp.hidden = true;
-        inp.onchange = handleImageInput;
-        old.parentNode.replaceChild(inp, old);
+        const inp = document.getElementById('fileInput');
+        inp.removeAttribute('capture');
         inp.click();
     }
 
@@ -3019,8 +3006,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         // Genérico
         } else {
             showToast('', '⚠️', 'Algo deu errado',
-                'Erro: ' + (msg || 'desconhecido'),
-                { duracao: 10000 });
+                'Ocorreu um erro inesperado. Tente novamente em alguns instantes.',
+                { duracao: 6000 });
         }
     }
 

@@ -1883,7 +1883,7 @@
         </div>
 
         <div class="card">
-            <div class="upload-box" id="upload-box-main" onclick="abrirGaleria()">
+            <div class="upload-box" id="upload-box-main">
                 <span class="upload-icon">📸</span>
                 <div class="upload-title">Enviar da galeria ou câmera</div>
                 <div class="upload-sub">JPG, PNG, HEIC — qualquer resolução</div>
@@ -1891,8 +1891,8 @@
                 <img id="preview">
             </div>
             <div class="upload-btns-row" id="upload-btns-row">
-                <button class="upload-btn-opt" onclick="abrirCamera()">📷 Usar câmera</button>
-                <button class="upload-btn-opt" onclick="abrirGaleria()">🖼️ Galeria</button>
+                <button class="upload-btn-opt" onclick="event.stopPropagation();abrirCamera()">📷 Usar câmera</button>
+                <button class="upload-btn-opt" onclick="event.stopPropagation();abrirGaleria()">🖼️ Galeria</button>
             </div>
             <button class="btn-scan" id="runBtn" disabled>⬡ Iniciar Análise Botânica</button>
             <div id="status-ia"></div>

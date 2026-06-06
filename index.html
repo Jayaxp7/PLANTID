@@ -630,6 +630,37 @@
             text-transform: uppercase;
         }
 
+        .upload-btns-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .upload-btn-opt {
+            flex: 1;
+            padding: 11px 0;
+            border: 1.5px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            letter-spacing: 0.3px;
+        }
+        .upload-btn-opt:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        body.dark-mode .upload-btn-opt {
+            border-color: #81c784;
+            color: #81c784;
+        }
+        body.dark-mode .upload-btn-opt:hover {
+            background: #2e7d32;
+            color: #fff;
+        }
+
         #preview {
             width: 100%;
             border-radius: 14px;
@@ -1852,12 +1883,17 @@
         </div>
 
         <div class="card">
-            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-box" id="upload-box-main" onclick="document.getElementById('fileInput').click()">
                 <span class="upload-icon">📸</span>
-                <div class="upload-title">Fotografar ou enviar amostra</div>
+                <div class="upload-title">Enviar da galeria ou câmera</div>
                 <div class="upload-sub">JPG, PNG, HEIC — qualquer resolução</div>
                 <input type="file" id="fileInput" accept="image/*" hidden>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                 <img id="preview">
+            </div>
+            <div class="upload-btns-row" id="upload-btns-row">
+                <button class="upload-btn-opt" onclick="document.getElementById('cameraInput').click()">📷 Usar câmera</button>
+                <button class="upload-btn-opt" onclick="document.getElementById('fileInput').click()">🖼️ Galeria</button>
             </div>
             <button class="btn-scan" id="runBtn" disabled>⬡ Iniciar Análise Botânica</button>
             <div id="status-ia"></div>
@@ -1993,7 +2029,10 @@
     }
 
     /* ─── COMPRESSÃO DE IMAGEM ─── */
-    document.getElementById('fileInput').onchange = (e) => {
+    document.getElementById('fileInput').onchange = handleImageInput;
+    document.getElementById('cameraInput').onchange = handleImageInput;
+
+    function handleImageInput(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -2014,6 +2053,8 @@
                 document.querySelector('.upload-box .upload-title').style.display = 'none';
                 document.querySelector('.upload-box .upload-sub').style.display = 'none';
                 document.getElementById('runBtn').disabled = false;
+                const btnsRow = document.getElementById('upload-btns-row');
+                if (btnsRow) btnsRow.style.display = 'none';
             };
             img.src = event.target.result;
         };

@@ -439,6 +439,9 @@
         }
         .toggle-wrap input:checked + .toggle-slider { background: var(--primary); }
         .toggle-wrap input:checked + .toggle-slider:before { transform: translateX(20px); }
+        .config-feedback-btn { display:block; width:100%; text-align:center; padding:9px 0; background:linear-gradient(135deg,#2e7d32,#43a047); color:#fff !important; text-decoration:none; border-radius:10px; font-size:0.82rem; font-weight:700; letter-spacing:0.3px; transition:opacity .2s; }
+        .config-feedback-btn:hover { opacity:0.88; }
+        body.dark-mode .config-feedback-btn { background:linear-gradient(135deg,#1b5e20,#2e7d32); }
 
         /* ── NAV ── */
         nav {
@@ -3674,6 +3677,10 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <input type="checkbox" id="toggle-dark" onchange="toggleDarkMode(this.checked)">
                 <span class="toggle-slider"></span>
             </label>
+        </div>
+        <div style="padding:8px 4px 4px;">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSed1DZXOI-4JeWd1G5oLX0t-cknwNsi1L4WzAaK7FCRfwveVw/viewform?usp=header" target="_blank" rel="noopener" class="config-feedback-btn">💬 Avaliar o app</a>
+            <div style="font-size:0.68rem;color:#888;text-align:center;padding:5px 4px 2px;line-height:1.4;">Sua opinião nos ajuda a melhorar o PlantID 🌿</div>
         </div>
     </div>
 

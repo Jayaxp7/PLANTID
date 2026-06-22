@@ -498,7 +498,7 @@ Se não reconhecer a espécie, retorne: {"erro":"Espécie não encontrada"}`;
         resultado.style.display = 'block';
 
         const imgHtml = p.img_drive
-            ? `<img src="${p.img_drive}" class="result-img" alt="${p.nome_popular}" onerror="this.parentElement.innerHTML='<div class=result-img-placeholder><i data-lucide=leaf style=width:3rem;height:3rem;></i></div>'">`
+            ? `<img src="${p.img_drive}" class="result-img" alt="${p.nome_popular || ''}" onerror="this.style.display='none'">`
             : `<div class="result-img-placeholder"><i data-lucide="leaf" style="width:3rem;height:3rem;color:rgba(102,187,106,.3);"></i></div>`;
 
         const badgeHtml = fonte === 'firestore'

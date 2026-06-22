@@ -2193,6 +2193,42 @@
                 return;
             }
 
+            // Verifica cache global de espécies no Firestore
+            status.innerText = "🔍 Verificando banco global de espécies...";
+            try {
+                const especieKey = binomialKey.replace(/ /g, '_');
+                const especieDoc = await window._fbDB.collection('especies').doc(especieKey).get();
+                if (especieDoc.exists) {
+                    const especieData = especieDoc.data();
+                    // Remove campos internos do Firestore antes de salvar localmente
+                    const { _savedAt, ...plantFirestore } = especieData;
+                    plantFirestore.img = currentImgBase64;
+                    plantFirestore.timestamp = Date.now();
+
+                    // Salva no herbário local para próximas consultas offline
+                    const cacheTx = db.transaction("plants", "readwrite");
+                    const cacheReq = cacheTx.objectStore("plants").add(plantFirestore);
+                    cacheTx.oncomplete = () => {
+                        plantFirestore.id = cacheReq.result;
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        window._currentFeedbackImg = plantFirestore.img || null;
+                        renderFeedback(plantFirestore.nome_cientifico, plantFirestore.img, fbDocId);
+                        btn.disabled = false;
+                    };
+                    cacheTx.onerror = () => {
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        btn.disabled = false;
+                    };
+                    status.innerText = "⚡ Ficha carregada do banco global!";
+                    return;
+                }
+            } catch(e) {
+                console.warn('Cache global Firestore:', e.message);
+                // Falha silenciosa — continua para o Gemini normalmente
+            }
+
             status.innerText = "✨ Nova espécie! Gerando relatório botânico...";
 
             // Etapa 2: relatório completo com nome já confirmado
@@ -2276,7 +2312,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             const addTx = db.transaction("plants", "readwrite");
             const addReq = addTx.objectStore("plants").add(plant);
 
-            addTx.oncomplete = () => {
+            addTx.oncomplete = async () => {
                 // Recupera o id gerado e abre o modal
                 plant.id = addReq.result;
                 status.innerText = "";
@@ -2284,6 +2320,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 window._currentFeedbackImg = plant.img || null;
                 renderFeedback(plant.nome_cientifico, plant.img, fbDocId);
                 sincronizarPlantaIndividual(plant);
+
+                // Salva ficha no banco global de espécies (sem a foto — muito pesada)
+                try {
+                    const especieKey = binomialKey.replace(/ /g, '_');
+                    const { img, id, timestamp, ...plantSemFoto } = plant;
+                    await window._fbDB.collection('especies').doc(especieKey).set({
+                        ...plantSemFoto,
+                        _savedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch(e) {
+                    console.warn('Salvar espécie global:', e.message);
+                    // Falha silenciosa — não prejudica o usuário
+                }
             };
 
             addTx.onerror = () => {

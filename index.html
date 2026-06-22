@@ -175,13 +175,14 @@
             color: rgba(165,214,167,.6);
             font-family: 'DM Sans', sans-serif;
             font-weight: 500;
-            font-size: .75rem;
-            letter-spacing: 1px;
+            font-size: .72rem;
+            letter-spacing: .8px;
             text-transform: uppercase;
-            padding: 6px 16px;
+            padding: 6px 12px;
             border-radius: 8px;
             cursor: pointer;
             transition: all .2s;
+            white-space: nowrap;
         }
         nav button:hover {
             background: rgba(76,175,80,.08);
@@ -1122,13 +1123,14 @@
         @media (max-width: 600px) {
             .hero-title { font-size:3.2rem; }
             .container { padding:28px 16px 70px; }
-            nav { padding:0 12px; gap:4px; }
+            nav { padding:0 8px; }
             .nav-logo-icon { width:32px; height:32px; }
             .nav-logo-text { display:none; }
             .nav-logo-sub { display:none; }
             .nav-logo { gap:0; }
-            .nav-tabs { gap:2px; }
-            nav button { padding:6px 10px; font-size:.68rem; letter-spacing:.5px; }
+            .nav-tabs { gap:1px; }
+            nav button { padding:5px 7px; font-size:.62rem; letter-spacing:.3px; }
+            nav button i { display:none !important; }
             .modal-body { padding:20px 18px 24px; }
             .info-grid { grid-template-columns:1fr; }
             .modal-plant-name { font-size:2rem; }
@@ -1337,10 +1339,10 @@
         </div>
     </div>
     <div class="nav-tabs">
-        <button id="nav-analise" class="active" onclick="showPage('analise')"><i data-lucide="scan-line" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:5px;"></i>Scanner</button>
-        <button id="nav-herbario" onclick="showPage('herbario')"><i data-lucide="book-open" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:5px;"></i>Herbário</button>
-        <button id="nav-glossario" onclick="showPage('glossario')"><i data-lucide="library" style="width:15px;height:15px;display:inline;vertical-align:middle;margin-right:5px;"></i>Glossário</button>
-
+        <button id="nav-analise" class="active" onclick="showPage('analise')"><i data-lucide="scan-line" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Scanner</button>
+        <button id="nav-herbario" onclick="showPage('herbario')"><i data-lucide="book-open" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Herbário</button>
+        <button id="nav-glossario" onclick="showPage('glossario')"><i data-lucide="library" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Glossário</button>
+        <button id="nav-lab" onclick="window.location.href='/lab'"><i data-lucide="flask-conical" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Lab</button>
     </div>
 </nav>
 

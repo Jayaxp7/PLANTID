@@ -16,7 +16,9 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* ── CURSOR FOLHA (apenas desktop) ── */
+
+        /* ── ILUMINAÇÃO SUAVE ANIMADA ── */
+/* ── CURSOR FOLHA (apenas desktop) ── */
         @media (pointer: fine) {
             html, body, * { cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj4KICA8cGF0aCBkPSJNNiA1MiBDNiA1MiAxNCAyMCAzNiAxMCBDNTIgMyA2MCAxMiA1OCAyNiBDNTQgNDQgMzIgNTggNiA1MloiIGZpbGw9IiMzYTdhMjgiIG9wYWNpdHk9IjAuMyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMiwyKSIvPgogIDxwYXRoIGQ9Ik02IDUyIEM2IDUyIDE0IDIwIDM2IDEwIEM1MiAzIDYwIDEyIDU4IDI2IEM1NCA0NCAzMiA1OCA2IDUyWiIgZmlsbD0iIzVhOWUzYSIvPgogIDxwYXRoIGQ9Ik0yMCAzOCBDMjQgMjQgMzQgMTQgNTAgMTAgQzU2IDggNjAgMTIgNTggMTggQzU0IDMwIDM4IDQyIDIwIDM4WiIgZmlsbD0iIzZhYjg0MCIgb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjYiIHkxPSI1MiIgeDI9IjU2IiB5Mj0iMTIiIHN0cm9rZT0iIzNhNzAyMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+') 3 26, auto !important; }
         }
@@ -26,13 +28,13 @@
         @keyframes particulaVoar { 0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.2)} }
 
         /* ── MODO CLARO ── */
-        body.light-mode { background:#f0f7f0; color:#1a2e1b; }
+        body.light-mode { background:#c8deca; color:#1a2e1b; }
         body.light-mode::before { background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(76,175,80,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 110%,rgba(46,125,50,.12) 0%,transparent 60%); }
         body.light-mode nav { background:rgba(240,247,240,.85); border-bottom-color:rgba(46,125,50,.2); }
         body.light-mode .nav-logo-text { color:#1b5e20; }
         body.light-mode nav button { color:rgba(46,125,50,.7); }
         body.light-mode nav button:hover, body.light-mode nav button.active { color:#1b5e20; background:rgba(76,175,80,.12); border-color:rgba(76,175,80,.3); }
-        body.light-mode .card { background:rgba(255,255,255,0.3); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-color:rgba(76,175,80,.25); box-shadow:0 8px 32px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8),inset 0 0 6px 2px rgba(255,255,255,.25); }
+        body.light-mode .card { background:rgba(255,255,255,0.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-color:rgba(76,175,80,.25); box-shadow:0 8px 32px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8),inset 0 0 6px 2px rgba(255,255,255,.25); }
         body.light-mode .card::before { background:linear-gradient(90deg,transparent,rgba(255,255,255,.88),transparent); }
         body.light-mode .card::after { background:linear-gradient(180deg,rgba(255,255,255,.65),transparent 60%,rgba(255,255,255,.2)); }
         body.light-mode .hero-title { color:#1b5e20; }
@@ -44,26 +46,29 @@
         body.light-mode .upload-btn-opt { background:rgba(255,255,255,.6); border-color:rgba(76,175,80,.3); color:#2e7d32; }
         body.light-mode .section-title { color:#1b5e20; }
         body.light-mode .section-sub { color:rgba(46,125,50,.5); }
-        body.light-mode .herb-card { background:rgba(255,255,255,0.28); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-color:rgba(76,175,80,.2); box-shadow:0 4px 16px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.7); }
+        body.light-mode .herb-card { background:rgba(255,255,255,0.52); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-color:rgba(76,175,80,.2); box-shadow:0 4px 16px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.7); }
         body.light-mode .herb-card::before { background:linear-gradient(90deg,transparent,rgba(255,255,255,.82),transparent); }
         body.light-mode .herb-label-name { color:#1b5e20; }
         body.light-mode .herb-label-sci { color:rgba(46,125,50,.6); }
         body.light-mode .herb-feedback-bar { background:rgba(240,247,240,.6); border-top-color:rgba(76,175,80,.15); }
         body.light-mode .herb-search { background:rgba(255,255,255,.6); border-color:rgba(76,175,80,.25); color:#1a2e1b; }
         body.light-mode .herb-search::placeholder { color:rgba(46,125,50,.4); }
-        body.light-mode .modal-content { background:rgba(240,247,240,0.5); backdrop-filter:blur(32px); -webkit-backdrop-filter:blur(32px); border-color:rgba(76,175,80,.25); box-shadow:0 32px 80px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.75); }
+        body.light-mode .modal-content { background:rgba(210,235,212,0.78); backdrop-filter:blur(32px); -webkit-backdrop-filter:blur(32px); border-color:rgba(76,175,80,.25); box-shadow:0 32px 80px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.75); }
         body.light-mode .modal-content::before { background:linear-gradient(90deg,transparent,rgba(255,255,255,.88),transparent); }
         body.light-mode .info-section-title { color:#1b5e20; }
-        body.light-mode .info-box { background:rgba(255,255,255,.55); border-color:rgba(76,175,80,.18); }
+        body.light-mode .info-box { background:rgba(255,255,255,0.62); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); border-color:rgba(76,175,80,.2); box-shadow:0 4px 16px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.6),inset 0 0 4px 2px rgba(255,255,255,.2); }
         body.light-mode .info-label { color:rgba(46,125,50,.55); }
         body.light-mode .info-value { color:#1a2e1b; }
-        body.light-mode .glossario-item { background:rgba(255,255,255,.5); }
+        body.light-mode .glossario-letra-btn { background:rgba(255,255,255,0.6); font-weight:700; border-color:rgba(76,175,80,.25); color:#1b5e20; box-shadow:inset 0 1px 0 rgba(255,255,255,.7); }
+        body.light-mode .glossario-letra-btn:hover, body.light-mode .glossario-letra-btn.active { background:rgba(76,175,80,.2); color:#1b5e20; }
+        body.light-mode .glossario-item { background:rgba(255,255,255,0.58); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); border-color:rgba(76,175,80,.2); box-shadow:0 4px 16px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.55); }
         body.light-mode .glossario-item-termo { color:#1b5e20; }
         body.light-mode .glossario-item-def { color:rgba(46,125,50,.7); }
         body.light-mode .glossario-search { background:rgba(255,255,255,.6); border-color:rgba(76,175,80,.25); color:#1a2e1b; }
         body.light-mode #config-btn { background:rgba(255,255,255,.5); }
         body.light-mode #config-panel { background:rgba(240,247,240,.95); border-color:rgba(76,175,80,.2); }
         body.light-mode .toggle-name { color:#1b5e20; }
+        body.light-mode .btn-scan { background:linear-gradient(135deg,rgba(46,125,50,.8) 0%,rgba(27,94,32,.9) 100%); border-color:rgba(76,175,80,.4); }
         body.light-mode #plantid-toast { background:rgba(240,247,240,.95); border-color:rgba(76,175,80,.25); }
         body.light-mode .toast-title { color:#1a2e1b; }
         body.light-mode .toast-msg { color:rgba(46,125,50,.75); }
@@ -338,18 +343,24 @@
             margin-top: 16px;
             padding: 17px;
             border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 50%, #0f3d11 100%);
+            border: 1px solid rgba(102,187,106,0.35);
+            background: linear-gradient(135deg, rgba(46,125,50,0.7) 0%, rgba(27,94,32,0.8) 50%, rgba(15,61,17,0.9) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: #e8f5e9;
             font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            font-size: .8rem;
+            font-weight: 700;
+            font-size: .82rem;
             letter-spacing: 2.5px;
             text-transform: uppercase;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(27,94,32,.4), 0 0 0 1px rgba(76,175,80,.2) inset;
+            box-shadow:
+                0 4px 20px rgba(27,94,32,.5),
+                inset 0 1px 0 rgba(255,255,255,0.25),
+                inset 0 -1px 0 rgba(0,0,0,0.1),
+                inset 0 0 4px 2px rgba(102,187,106,0.08);
             transition: all .3s cubic-bezier(.34,1.56,.64,1);
         }
         .btn-scan::before {
@@ -775,16 +786,28 @@
 
         .glossario-letras { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
         .glossario-letra-btn {
-            width:32px; height:32px; border-radius:8px;
-            background:rgba(27,94,32,.15);
-            border:1px solid rgba(76,175,80,.18);
-            color:rgba(165,214,167,.7);
-            font-size:.8rem; font-weight:600;
+            width:34px; height:34px; border-radius:8px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border:1px solid rgba(255,255,255,0.2);
+            color: #a5d6a7;
+            font-size:.8rem; font-weight:700;
             cursor:pointer; transition:all .2s;
             display:flex; align-items:center; justify-content:center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 2px 8px rgba(0,0,0,0.2);
         }
-        .glossario-letra-btn:hover, .glossario-letra-btn.active {
-            background:rgba(46,125,50,.3); border-color:rgba(76,175,80,.5); color:#a5d6a7;
+        .glossario-letra-btn:hover {
+            background:rgba(76,175,80,.2);
+            border-color:rgba(76,175,80,.5);
+            color:#e8f5e9;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 12px rgba(27,94,32,.3);
+        }
+        .glossario-letra-btn.active {
+            background: rgba(46,125,50,.4);
+            border-color: rgba(102,187,106,.6);
+            color: #e8f5e9;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 12px rgba(76,175,80,.3);
         }
 
         .glossario-grupo { margin-bottom:24px; }
@@ -1197,6 +1220,12 @@
 
 <!-- SHADOW OVERLAY -->
 <div id="leaves-overlay">
+
+    <!-- ORBES DE LUZ DIFUSA -->
+    <div class="orbe-luz orbe-1"></div>
+    <div class="orbe-luz orbe-2"></div>
+    <div class="orbe-luz orbe-3"></div>
+
 
     <!-- Ramo superior direito -->
     <svg class="shadow-group" width="420" height="380" viewBox="0 0 420 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="top:-20px;right:-60px;animation-delay:3s;">
@@ -2830,12 +2859,14 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     function toggleDarkMode(ativo) {
         document.body.classList.toggle('light-mode', ativo);
         localStorage.setItem('plantid_lightmode', ativo ? '1' : '0');
+        const toggle = document.getElementById('toggle-dark');
+        if (toggle) toggle.checked = ativo;
     }
 
     // Aplicar preferência salva ao carregar
     (function() {
-        const dark = localStorage.getItem('plantid_lightmode') === '1';
-        if (dark) {
+        const lightSalvo = localStorage.getItem('plantid_lightmode') === '1';
+        if (lightSalvo) {
             document.body.classList.add('light-mode');
             document.addEventListener('DOMContentLoaded', () => {
                 const toggle = document.getElementById('toggle-dark');
@@ -3427,8 +3458,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
     // Re-renderiza ícones lucide após conteúdo dinâmico
     window._lucideRefresh = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); };
-
-    </script>
+</script>
     <!-- BOTÃO DE CONFIGURAÇÕES -->
     <button id="config-btn" onclick="toggleConfigPanel()" title="Configurações">⚙️</button>
 

@@ -18,7 +18,63 @@
     <style>
 
         /* ── ILUMINAÇÃO SUAVE ANIMADA ── */
-/* ── CURSOR FOLHA (apenas desktop) ── */
+/* ── ORBES DE LUZ DIFUSA ── */
+        @keyframes orbePulse1 {
+            0%,100% { transform:translate(0,0) scale(1); opacity:.22; }
+            33%     { transform:translate(30px,-20px) scale(1.1); opacity:.35; }
+            66%     { transform:translate(-20px,15px) scale(.93); opacity:.18; }
+        }
+        @keyframes orbePulse2 {
+            0%,100% { transform:translate(0,0) scale(1); opacity:.15; }
+            40%     { transform:translate(-30px,25px) scale(1.15); opacity:.28; }
+            70%     { transform:translate(18px,-20px) scale(.9); opacity:.12; }
+        }
+        @keyframes orbePulse3 {
+            0%,100% { transform:translateX(-50%) scale(1); opacity:.1; }
+            50%     { transform:translateX(-50%) scale(1.2); opacity:.2; }
+        }
+        .orbe-luz { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:0; }
+        .orbe-1 {
+            width:500px; height:500px; top:-120px; left:-120px;
+            background:radial-gradient(circle, rgba(76,175,80,.55) 0%, rgba(27,94,32,.2) 55%, transparent 100%);
+            animation:orbePulse1 13s ease-in-out infinite;
+        }
+        .orbe-2 {
+            width:600px; height:600px; bottom:-180px; right:-180px;
+            background:radial-gradient(circle, rgba(46,125,50,.5) 0%, rgba(15,61,17,.15) 55%, transparent 100%);
+            animation:orbePulse2 16s ease-in-out infinite 4s;
+        }
+        .orbe-3 {
+            width:350px; height:350px; top:45%; left:50%;
+            background:radial-gradient(circle, rgba(102,187,106,.22) 0%, transparent 70%);
+            animation:orbePulse3 11s ease-in-out infinite 7s;
+        }
+
+        /* ── VAGALUMES NEON ── */
+        @keyframes vagalumeFlutuando {
+            0%   { transform:translate(0,0) scale(1); opacity:0; }
+            15%  { opacity:1; }
+            50%  { transform:translate(var(--vx), var(--vy)) scale(var(--vs)); opacity:.85; }
+            85%  { opacity:.7; }
+            100% { transform:translate(calc(var(--vx)*1.8), calc(var(--vy)*1.3)) scale(.5); opacity:0; }
+        }
+        @keyframes vagalumeGlow {
+            0%,100% { box-shadow:0 0 3px 1px rgba(102,187,106,.3), 0 0 8px 3px rgba(76,175,80,.1); }
+            50%     { box-shadow:0 0 7px 3px rgba(102,187,106,.7), 0 0 18px 7px rgba(76,175,80,.3), 0 0 35px 12px rgba(46,125,50,.1); }
+        }
+        .vagalume {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(144,238,144,.9);
+            pointer-events: none;
+            z-index: 1;
+            animation:
+                vagalumeFlutuando var(--vd) ease-in-out var(--vdel) infinite,
+                vagalumeGlow calc(var(--vd) * .55) ease-in-out var(--vdel) infinite;
+        }
+        body.light-mode .vagalume { opacity:.08; }
+
+        /* ── CURSOR FOLHA (apenas desktop) ── */
         @media (pointer: fine) {
             html, body, * { cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj4KICA8cGF0aCBkPSJNNiA1MiBDNiA1MiAxNCAyMCAzNiAxMCBDNTIgMyA2MCAxMiA1OCAyNiBDNTQgNDQgMzIgNTggNiA1MloiIGZpbGw9IiMzYTdhMjgiIG9wYWNpdHk9IjAuMyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMiwyKSIvPgogIDxwYXRoIGQ9Ik02IDUyIEM2IDUyIDE0IDIwIDM2IDEwIEM1MiAzIDYwIDEyIDU4IDI2IEM1NCA0NCAzMiA1OCA2IDUyWiIgZmlsbD0iIzVhOWUzYSIvPgogIDxwYXRoIGQ9Ik0yMCAzOCBDMjQgMjQgMzQgMTQgNTAgMTAgQzU2IDggNjAgMTIgNTggMTggQzU0IDMwIDM4IDQyIDIwIDM4WiIgZmlsbD0iIzZhYjg0MCIgb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjYiIHkxPSI1MiIgeDI9IjU2IiB5Mj0iMTIiIHN0cm9rZT0iIzNhNzAyMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+') 3 26, auto !important; }
         }
@@ -3458,7 +3514,37 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
     // Re-renderiza ícones lucide após conteúdo dinâmico
     window._lucideRefresh = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); };
-</script>
+
+    /* ── VAGALUMES NEON ── */
+    (function criarVagalumes() {
+        const qtd = 28;
+        for (let i = 0; i < qtd; i++) {
+            const v = document.createElement('div');
+            v.className = 'vagalume';
+            // Posição aleatória na tela
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            // Movimento aleatório
+            const vx = (Math.random() - 0.5) * 120;
+            const vy = (Math.random() - 0.5) * 120;
+            const vs = 0.4 + Math.random() * 1.2;
+            // Duração e delay aleatórios
+            const dur = 4 + Math.random() * 8;
+            const del = Math.random() * 10;
+            // Tamanho variado
+            const sz = 2 + Math.random() * 3;
+            v.style.cssText = `
+                left:${x}vw; top:${y}vh;
+                width:${sz}px; height:${sz}px;
+                --vx:${vx}px; --vy:${vy}px; --vs:${vs};
+                --vd:${dur}s; --vdel:${del}s;
+            `;
+            document.body.appendChild(v);
+        }
+    })();
+
+
+    </script>
     <!-- BOTÃO DE CONFIGURAÇÕES -->
     <button id="config-btn" onclick="toggleConfigPanel()" title="Configurações">⚙️</button>
 

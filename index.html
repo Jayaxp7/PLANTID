@@ -2080,9 +2080,9 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             </div>
 
             <div class="modal-actions">
-                <button class="btn-close-modal" onclick="closeModal()">Fechar</button>
-                <button class="btn-share" onclick="compartilharPlanta()"><i data-lucide="share-2" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:5px;"></i>Compartilhar</button>
-                <button class="btn-delete" onclick="deletePlant(${p.id})"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:5px;"></i>Remover</button>
+                <button class="btn-close-modal" onclick="closeModal()"><i data-lucide="x" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:5px;"></i>Fechar</button>
+                <button class="btn-share-modal" onclick="compartilharPlanta()"><i data-lucide="share-2" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:5px;"></i>Compartilhar</button>
+                <button class="btn-delete-modal" onclick="deletePlant(${p.id})"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:5px;"></i>Remover</button>
             </div>
         `;
 
@@ -2269,15 +2269,16 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         if (existing) existing.remove();
         const box = document.createElement('div');
         box.id = 'feedback-box';
-        box.style.cssText = 'margin:16px 24px 0;padding:16px;background:#f1f8e9;border-radius:14px;text-align:center;border:1px solid #c8e6c9;';
+        box.style.cssText = 'margin:16px 24px 0;padding:16px;background:rgba(15,35,16,0.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:14px;text-align:center;border:1px solid rgba(76,175,80,0.2);';
         box.innerHTML = `
-            <p style="margin:0 0 12px;font-size:0.85rem;color:#2e7d32;font-weight:600;">A identificação foi correta?</p>
+            <p style="margin:0 0 12px;font-size:0.85rem;color:rgba(165,214,167,0.8);font-weight:600;letter-spacing:0.3px;">A identificação foi correta?</p>
             <div style="display:flex;gap:10px;justify-content:center;">
-                <button onclick="enviarFeedback(true,'${fbDocId}','${nomeCientifico}')" style="flex:1;padding:10px;background:#2e7d32;color:#fff;border:none;border-radius:10px;font-size:0.9rem;cursor:pointer;font-weight:600;"><i data-lucide="check" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Sim</button>
-                <button onclick="enviarFeedback(false,'${fbDocId}','${nomeCientifico}')" style="flex:1;padding:10px;background:rgba(229,57,53,0.12);color:#ef9a9a;border:1px solid rgba(229,57,53,0.35);border-radius:10px;font-size:0.9rem;cursor:pointer;font-weight:600;"><i data-lucide="x" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Não</button>
+                <button onclick="enviarFeedback(true,'${fbDocId}','${nomeCientifico}')" style="flex:1;padding:10px;background:rgba(46,125,50,0.5);color:#e8f5e9;border:1px solid rgba(76,175,80,0.35);border-radius:10px;font-size:0.88rem;cursor:pointer;font-weight:600;backdrop-filter:blur(8px);transition:all .2s;"><i data-lucide="check" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Sim</button>
+                <button onclick="enviarFeedback(false,'${fbDocId}','${nomeCientifico}')" style="flex:1;padding:10px;background:rgba(229,57,53,0.1);color:#ef9a9a;border:1px solid rgba(229,57,53,0.3);border-radius:10px;font-size:0.88rem;cursor:pointer;font-weight:600;backdrop-filter:blur(8px);transition:all .2s;"><i data-lucide="x" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>Não</button>
             </div>`;
         const actions = document.querySelector('.modal-actions');
         if (actions) actions.parentNode.insertBefore(box, actions);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     window._currentFeedbackImg = null;
@@ -2286,7 +2287,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         await salvarFeedback(docId, correto, window._currentFeedbackImg, nomeCientifico);
         const box = document.getElementById('feedback-box');
         if (box) {
-            box.innerHTML = `<p style="margin:0;font-size:0.9rem;color:#2e7d32;font-weight:600;">${correto ? '✅ Obrigado! Identificação confirmada.' : '❌ Obrigado! Vamos melhorar.'}</p>`;
+            box.innerHTML = `<p style="margin:0;font-size:0.88rem;color:#66bb6a;font-weight:600;">${correto ? '✓ Obrigado! Identificação confirmada.' : '✓ Obrigado! Vamos melhorar.'}</p>`;
             setTimeout(() => box.remove(), 3000);
         }
     }

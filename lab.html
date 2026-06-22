@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantID Lab — Enciclopédia Botânica</title>
+    <meta name="description" content="Consulte fichas técnicas completas de espécies botânicas.">
+    <link rel="icon" href="/icon.png" type="image/png">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #030a04;
+            min-height: 100vh;
+            color: #e8f5e9;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(27,94,32,.35) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 110%, rgba(46,125,50,.25) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 60% at 50% 50%, rgba(15,35,16,.8) 0%, transparent 100%);
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; height: 64px;
+            background: rgba(3,10,4,.7);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(76,175,80,.12);
+            box-shadow: 0 1px 0 rgba(76,175,80,.06), 0 4px 32px rgba(0,0,0,.4);
+        }
+
+        .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-logo img { width:34px; height:34px; }
+        .nav-logo-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700; font-size: 1.5rem;
+            color: #e8f5e9; letter-spacing: .5px; line-height: 1;
+        }
+        .nav-logo-sub {
+            font-size: .5rem; font-weight: 400;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: #4caf50; display: block; margin-top: 1px;
+        }
+
+        .nav-badge {
+            font-size: .65rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: #66bb6a;
+            border: 1px solid rgba(76,175,80,.3);
+            background: rgba(76,175,80,.1);
+            padding: 4px 10px; border-radius: 6px;
+        }
+
+        .nav-back {
+            background: transparent;
+            border: 1px solid rgba(76,175,80,.2);
+            color: rgba(165,214,167,.7);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .75rem; font-weight: 500;
+            letter-spacing: .8px; text-transform: uppercase;
+            padding: 6px 14px; border-radius: 8px;
+            cursor: pointer; transition: all .2s;
+            display: flex; align-items: center; gap: 6px;
+            text-decoration: none;
+        }
+        .nav-back:hover { background:rgba(76,175,80,.08); border-color:rgba(76,175,80,.35); color:#a5d6a7; }
+
+        /* ── LAYOUT ── */
+        .container {
+            position: relative; z-index: 1;
+            max-width: 860px; margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        /* ── HERO ── */
+        .hero { text-align: center; margin-bottom: 48px; }
+        .hero-eyebrow {
+            font-size: .68rem; font-weight: 600;
+            letter-spacing: 4px; text-transform: uppercase;
+            color: rgba(102,187,106,.6);
+            border-top: 1px solid rgba(76,175,80,.2);
+            border-bottom: 1px solid rgba(76,175,80,.2);
+            display: inline-block; padding: 5px 20px; margin-bottom: 20px;
+        }
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.8rem; font-weight: 700;
+            color: #e8f5e9; line-height: .95; letter-spacing: -1px;
+        }
+        .hero-title em { font-style: italic; color: #66bb6a; }
+        .hero-sub {
+            font-size: .88rem; color: rgba(165,214,167,.5);
+            margin-top: 14px; line-height: 1.6;
+        }
+
+        /* ── SEARCH CARD ── */
+        .search-card {
+            background: rgba(15,35,16,.45);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(76,175,80,.18);
+            border-radius: 20px; padding: 32px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(102,187,106,.25), inset 0 0 6px 2px rgba(76,175,80,.06);
+            margin-bottom: 32px;
+        }
+        .search-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(102,187,106,.7), transparent);
+        }
+        .search-card::after {
+            content: ''; position: absolute;
+            top: 0; left: 0; width: 1px; height: 100%;
+            background: linear-gradient(180deg, rgba(102,187,106,.6), transparent 60%, rgba(102,187,106,.15));
+        }
+
+        .search-label {
+            font-size: .7rem; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: rgba(165,214,167,.5); margin-bottom: 12px;
+            display: block;
+        }
+
+        .search-row { display: flex; gap: 10px; }
+
+        .search-input {
+            flex: 1; padding: 14px 18px;
+            background: rgba(27,94,32,.12);
+            border: 1px solid rgba(76,175,80,.25);
+            border-radius: 12px; color: #e8f5e9;
+            font-family: 'DM Sans', sans-serif; font-size: 1rem;
+            outline: none; transition: border-color .2s;
+        }
+        .search-input:focus { border-color: rgba(76,175,80,.55); }
+        .search-input::placeholder { color: rgba(165,214,167,.3); }
+
+        .search-btn {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            border: none; border-radius: 12px;
+            color: #e8f5e9; font-family: 'DM Sans', sans-serif;
+            font-weight: 600; font-size: .82rem;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            cursor: pointer; transition: all .25s;
+            box-shadow: 0 4px 16px rgba(27,94,32,.4);
+            display: flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+        }
+        .search-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(27,94,32,.5); }
+        .search-btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+        .search-hint {
+            font-size: .72rem; color: rgba(165,214,167,.35);
+            margin-top: 10px; text-align: center;
+        }
+        .search-hint span { color: rgba(102,187,106,.5); }
+
+        /* ── STATUS ── */
+        #status {
+            text-align: center; font-size: .84rem;
+            color: #66bb6a; min-height: 20px;
+            margin: 16px 0; letter-spacing: .3px;
+        }
+
+        /* ── RESULTADO ── */
+        #resultado { display: none; }
+
+        .result-card {
+            background: rgba(10,25,11,.85);
+            backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(76,175,80,.22);
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 32px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(102,187,106,.25);
+            position: relative;
+        }
+        .result-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 1px; z-index: 2;
+            background: linear-gradient(90deg, transparent, rgba(102,187,106,.7), transparent);
+        }
+
+        .result-img {
+            width: 100%; height: 280px;
+            object-fit: cover; display: block;
+        }
+        .result-img-placeholder {
+            width: 100%; height: 200px;
+            background: rgba(27,94,32,.2);
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(102,187,106,.3); font-size: 4rem;
+        }
+
+        .result-header {
+            padding: 28px 32px 20px;
+            border-bottom: 1px solid rgba(76,175,80,.12);
+        }
+
+        .result-source {
+            font-size: .62rem; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: rgba(102,187,106,.5); margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .result-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.6rem; font-weight: 700;
+            color: #e8f5e9; line-height: 1; margin-bottom: 4px;
+        }
+        .result-sci {
+            font-size: .95rem; color: rgba(165,214,167,.5);
+            font-style: italic;
+        }
+
+        .result-body { padding: 24px 32px 32px; }
+
+        /* ── INFO SECTIONS ── */
+        .info-section { margin-bottom: 24px; }
+        .info-section-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 12px; padding-bottom: 10px;
+            border-bottom: 1px solid rgba(76,175,80,.12);
+        }
+        .info-section-icon {
+            width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; flex-shrink: 0;
+        }
+        .icon-morfo { background: rgba(76,175,80,.12); }
+        .icon-cultivo { background: rgba(212,168,67,.1); }
+        .icon-fito { background: rgba(229,57,53,.1); }
+        .icon-eco { background: rgba(103,58,183,.1); }
+        .info-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.15rem; font-weight: 700;
+            color: #c8e6c9; letter-spacing: .3px;
+        }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .info-grid.single { grid-template-columns: 1fr; }
+
+        .info-box {
+            background: rgba(15,35,16,.5);
+            backdrop-filter: blur(8px);
+            border-radius: 10px; padding: 12px 14px;
+            border: 1px solid rgba(76,175,80,.12);
+            border-left: 2px solid #4caf50;
+        }
+        .info-box.warn { border-left-color: #d4a843; }
+        .info-box.danger { border-left-color: #f85149; }
+        .info-box.eco { border-left-color: #d4a843; }
+
+        .info-label {
+            display: block; font-size: .6rem; font-weight: 600;
+            letter-spacing: 1.8px; text-transform: uppercase;
+            color: rgba(165,214,167,.45); margin-bottom: 4px;
+        }
+        .info-value { font-size: .86rem; color: #c8e6c9; line-height: 1.55; }
+
+        /* ── BADGE FONTE ── */
+        .badge-cache {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: .62rem; font-weight: 600; letter-spacing: 1.5px;
+            text-transform: uppercase; padding: 3px 10px; border-radius: 6px;
+        }
+        .badge-cache.firestore { background: rgba(76,175,80,.12); color: #66bb6a; border: 1px solid rgba(76,175,80,.2); }
+        .badge-cache.gemini { background: rgba(103,58,183,.12); color: #ce93d8; border: 1px solid rgba(103,58,183,.2); }
+
+        /* ── EMPTY / ERROR ── */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: rgba(165,214,167,.4);
+        }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; display: block; }
+        .empty-state-text { font-size: 1.1rem; font-weight: 600; color: #a5d6a7; margin-bottom: 4px; }
+        .empty-state-sub { font-size: .82rem; }
+
+        /* ── CURSOR FOLHA (apenas desktop) ── */
+        @media (pointer: fine) {
+            html, body, * { cursor: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj4KICA8cGF0aCBkPSJNNiA1MiBDNiA1MiAxNCAyMCAzNiAxMCBDNTIgMyA2MCAxMiA1OCAyNiBDNTQgNDQgMzIgNTggNiA1MloiIGZpbGw9IiMzYTdhMjgiIG9wYWNpdHk9IjAuMyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMiwyKSIvPgogIDxwYXRoIGQ9Ik02IDUyIEM2IDUyIDE0IDIwIDM2IDEwIEM1MiAzIDYwIDEyIDU4IDI2IEM1NCA0NCAzMiA1OCA2IDUyWiIgZmlsbD0iIzVhOWUzYSIvPgogIDxwYXRoIGQ9Ik0yMCAzOCBDMjQgMjQgMzQgMTQgNTAgMTAgQzU2IDggNjAgMTIgNTggMTggQzU0IDMwIDM4IDQyIDIwIDM4WiIgZmlsbD0iIzZhYjg0MCIgb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjYiIHkxPSI1MiIgeDI9IjU2IiB5Mj0iMTIiIHN0cm9rZT0iIzNhNzAyMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+') 3 26, auto !important; }
+        }
+        @media (max-width: 600px) {
+            nav { padding: 0 14px; }
+            .nav-logo-text { display: none; }
+            .nav-logo-sub { display: none; }
+            .hero-title { font-size: 2.6rem; }
+            .container { padding: 32px 16px 60px; }
+            .search-row { flex-direction: column; }
+            .search-btn { justify-content: center; }
+            .result-header { padding: 20px 20px 16px; }
+            .result-body { padding: 16px 20px 24px; }
+            .result-name { font-size: 2rem; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo">
+        <svg class="nav-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#1b5e20"/>
+            <path d="M50 15 C50 15 20 35 20 60 C20 75 33 85 50 85 C67 85 80 75 80 60 C80 35 50 15 50 15Z" fill="#4caf50" opacity="0.9"/>
+            <path d="M50 85 L50 45" stroke="#a5d6a7" stroke-width="3" stroke-linecap="round"/>
+            <path d="M50 65 C50 65 35 55 28 45" stroke="#a5d6a7" stroke-width="2" stroke-linecap="round"/>
+            <path d="M50 55 C50 55 65 45 72 35" stroke="#a5d6a7" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="50" cy="72" r="8" fill="#81c784" opacity="0.6"/>
+        </svg>
+        <div>
+            <span class="nav-logo-text">PlantID</span>
+            <span class="nav-logo-sub">Engenharia Botânica</span>
+        </div>
+    </a>
+    <a href="/" class="nav-back">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i>
+        Voltar
+    </a>
+</nav>
+
+<div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+        <span class="hero-eyebrow">Enciclopédia Botânica</span>
+        <h1 class="hero-title">Plant<em>Lab</em></h1>
+        <p class="hero-sub">Digite o nome de qualquer planta e consulte sua ficha técnica completa.<br>Dados coletados pela comunidade PlantID.</p>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="search-card">
+        <span class="search-label">Nome da espécie</span>
+        <div class="search-row">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Ex: Monstera deliciosa, Hibiscus, Samambaia..."
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+            >
+            <button class="search-btn" id="search-btn" onclick="buscarEspecie()">
+                <i data-lucide="search" style="width:16px;height:16px;"></i>
+                Consultar
+            </button>
+        </div>
+        <p class="search-hint">Tente o nome popular ou científico · <span>Ex: "Ficus lyrata"</span></p>
+    </div>
+
+    <div id="status"></div>
+
+    <!-- RESULTADO -->
+    <div id="resultado"></div>
+
+</div>
+
+<script>
+    // ── LUCIDE ── carrega após DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    // ── FIREBASE ──────────────────────────────────────────────────────────
+    const FB_CONFIG = {
+        apiKey: "AIzaSyBwyxvfmL8rVzj_pCB6WjIUtvjRS0H2Ig0",
+        authDomain: "plantid-fbc60.firebaseapp.com",
+        projectId: "plantid-fbc60",
+        storageBucket: "plantid-fbc60.firebasestorage.app",
+        messagingSenderId: "619440929372",
+        appId: "1:619440929372:web:fa6a7c27fb0bcb590c4499"
+    };
+
+    let _db = null;
+    async function getDB() {
+        if (_db) return _db;
+        await Promise.all([
+            new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js'; s.onload=r; document.head.appendChild(s); }),
+            new Promise(r => { const s = document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js'; s.onload=r; document.head.appendChild(s); })
+        ]);
+        firebase.initializeApp(FB_CONFIG);
+        _db = firebase.firestore();
+        return _db;
+    }
+
+    // ── ENTER no input ───────────────────────────────────────────────────
+    document.getElementById('search-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') buscarEspecie();
+    });
+
+    // ── BUSCA PRINCIPAL ──────────────────────────────────────────────────
+    async function buscarEspecie() {
+        const input = document.getElementById('search-input').value.trim();
+        if (!input) return;
+
+        const btn = document.getElementById('search-btn');
+        const status = document.getElementById('status');
+        const resultado = document.getElementById('resultado');
+
+        btn.disabled = true;
+        resultado.style.display = 'none';
+        resultado.innerHTML = '';
+
+        try {
+            // 1. Normaliza o nome para busca
+            status.textContent = '🔍 Buscando no banco de espécies...';
+            const db = await getDB();
+
+            // Tenta match exato pelo binômio
+            const binomio = input.toLowerCase().trim().replace(/\s+/g, '_');
+            const docRef = await db.collection('especies').doc(binomio).get();
+
+            if (docRef.exists) {
+                const data = docRef.data();
+                status.textContent = '';
+                renderResultado(data, 'firestore');
+                return;
+            }
+
+            // Tenta busca flexível (nome popular pode ter variações)
+            status.textContent = '🔍 Tentando variações do nome...';
+            const snap = await db.collection('especies').get();
+            let encontrado = null;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const nomeP = (d.nome_popular || '').toLowerCase();
+                const nomeC = (d.nome_cientifico || '').toLowerCase();
+                const busca = input.toLowerCase();
+                if (nomeP.includes(busca) || nomeC.includes(busca) || busca.includes(nomeC.split(' ')[0])) {
+                    if (!encontrado) encontrado = d;
+                }
+            });
+
+            if (encontrado) {
+                status.textContent = '';
+                renderResultado(encontrado, 'firestore');
+                return;
+            }
+
+            // 2. Não encontrou — chama Gemini via /api/gemini
+            status.textContent = '✨ Espécie nova! Gerando ficha botânica...';
+            const prompt = `Você é um botanista especialista. Gere uma ficha técnica completa da espécie "${input}" em JSON, sem markdown, sem explicações extras. Formato EXATO:
+{"nome_popular":"...","nome_cientifico":"...","familia":"...","origem":"...","clima":"...","tamanho":"...","raiz":"...","folha":"...","flores":"...","frutos":"...","dispersao":"...","pragas":"...","uso_medicinal":"...","curiosidade":"...","toxicidade":"...","iucn":"..."}
+Se não reconhecer a espécie, retorne: {"erro":"Espécie não encontrada"}`;
+
+            const resp = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, image: null })
+            });
+
+            const text = await resp.text();
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('Resposta inválida da IA');
+
+            const plant = JSON.parse(jsonMatch[0]);
+            if (plant.erro) {
+                status.textContent = '';
+                renderErro(plant.erro);
+                return;
+            }
+
+            // Salva no Firestore para futuros usuários
+            const key = (plant.nome_cientifico || input).toLowerCase().replace(/\s+/g, '_');
+            try {
+                await db.collection('especies').doc(key).set({
+                    ...plant,
+                    _savedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch(e) { console.warn('Salvar Firestore:', e.message); }
+
+            status.textContent = '';
+            renderResultado(plant, 'gemini');
+
+        } catch(e) {
+            console.error(e);
+            status.textContent = '';
+            renderErro('Ocorreu um erro. Tente novamente.');
+        } finally {
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+    }
+
+    // ── RENDERIZA RESULTADO ──────────────────────────────────────────────
+    function renderResultado(p, fonte) {
+        const resultado = document.getElementById('resultado');
+        resultado.style.display = 'block';
+
+        const imgHtml = p.img_drive
+            ? `<img src="${p.img_drive}" class="result-img" alt="${p.nome_popular}" onerror="this.parentElement.innerHTML='<div class=result-img-placeholder><i data-lucide=leaf style=width:3rem;height:3rem;></i></div>'">`
+            : `<div class="result-img-placeholder"><i data-lucide="leaf" style="width:3rem;height:3rem;color:rgba(102,187,106,.3);"></i></div>`;
+
+        const badgeHtml = fonte === 'firestore'
+            ? `<span class="badge-cache firestore"><i data-lucide="database" style="width:10px;height:10px;display:inline;vertical-align:middle;"></i> Banco da comunidade</span>`
+            : `<span class="badge-cache gemini"><i data-lucide="sparkles" style="width:10px;height:10px;display:inline;vertical-align:middle;"></i> Gerado por IA</span>`;
+
+        const campo = (label, val, cls='') => val ? `
+            <div class="info-box ${cls}">
+                <span class="info-label">${label}</span>
+                <span class="info-value">${val}</span>
+            </div>` : '';
+
+        resultado.innerHTML = `
+            <div class="result-card">
+                ${imgHtml}
+                <div class="result-header">
+                    <div class="result-source">${badgeHtml}</div>
+                    <div class="result-name">${p.nome_popular || 'Espécie'}</div>
+                    <div class="result-sci">${p.nome_cientifico || ''}</div>
+                </div>
+                <div class="result-body">
+
+                    <div class="info-section">
+                        <div class="info-section-header">
+                            <div class="info-section-icon icon-morfo">🌿</div>
+                            <span class="info-section-title">Morfologia Detalhada</span>
+                        </div>
+                        <div class="info-grid">
+                            ${campo('Família / Ordem', p.familia)}
+                            ${campo('Origem', p.origem)}
+                            ${campo('Sistema Radicular', p.raiz)}
+                            ${campo('Tamanho Médio', p.tamanho)}
+                            ${campo('Folhas', p.folha)}
+                            ${campo('Flores', p.flores)}
+                            ${campo('Frutos', p.frutos)}
+                            ${campo('Dispersão', p.dispersao)}
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-section-header">
+                            <div class="info-section-icon icon-cultivo">🌱</div>
+                            <span class="info-section-title">Cultivo & Ambiente</span>
+                        </div>
+                        <div class="info-grid">
+                            ${campo('Clima Ideal', p.clima)}
+                            ${campo('Pragas Principais', p.pragas, 'warn')}
+                        </div>
+                    </div>
+
+                    ${p.uso_medicinal ? `
+                    <div class="info-section">
+                        <div class="info-section-header">
+                            <div class="info-section-icon icon-fito">🍃</div>
+                            <span class="info-section-title">Fitoterapia & Usos</span>
+                        </div>
+                        <div class="info-grid single">
+                            ${campo('Uso Medicinal', p.uso_medicinal)}
+                            ${campo('Toxicidade', p.toxicidade, 'danger')}
+                        </div>
+                    </div>` : ''}
+
+                    ${p.curiosidade || p.iucn ? `
+                    <div class="info-section">
+                        <div class="info-section-header">
+                            <div class="info-section-icon icon-eco">🌍</div>
+                            <span class="info-section-title">Conservação & Curiosidades</span>
+                        </div>
+                        <div class="info-grid single">
+                            ${campo('Curiosidade', p.curiosidade, 'eco')}
+                            ${campo('Status IUCN', p.iucn)}
+                        </div>
+                    </div>` : ''}
+
+                </div>
+            </div>`;
+
+        lucide.createIcons();
+        resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── ERRO ─────────────────────────────────────────────────────────────
+    function renderErro(msg) {
+        const resultado = document.getElementById('resultado');
+        resultado.style.display = 'block';
+        resultado.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-state-icon"><i data-lucide="leaf-off" style="width:3rem;height:3rem;color:rgba(165,214,167,.3);"></i></span>
+                <div class="empty-state-text">Espécie não encontrada</div>
+                <div class="empty-state-sub">${msg || 'Tente o nome científico completo.'}</div>
+            </div>`;
+        lucide.createIcons();
+    }
+</script>
+
+    <script>
+    // ── LOGO REAL ──
+    document.addEventListener('DOMContentLoaded', () => {
+        const logoImg = document.createElement('img');
+        logoImg.src = 'data:image/png;base64,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';
+        logoImg.className = 'nav-logo-icon';
+        logoImg.alt = 'PlantID';
+        const svgLogo = document.querySelector('.nav-logo svg');
+        if (svgLogo) svgLogo.replaceWith(logoImg);
+
+        // ── PARTÍCULAS DE FOLHA ──
+        const FOLHAS = [
+            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjYTVkNmE3IiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC42Ii8+PC9zdmc+",
+            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjYTVkNmE3IiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+",
+            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjYTVkNmE3IiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+"
+        ];
+
+        document.addEventListener('mousedown', e => spawnParticles(e.clientX, e.clientY));
+        document.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            spawnParticles(t.clientX, t.clientY);
+        }, { passive: true });
+
+        function spawnParticles(x, y) {
+            const qtd = 7 + Math.floor(Math.random() * 5);
+            for (let i = 0; i < qtd; i++) {
+                const p = document.createElement('img');
+                p.className = 'particula-folha';
+                p.src = FOLHAS[Math.floor(Math.random() * FOLHAS.length)];
+                const ang = (Math.PI * 2 / qtd) * i + (Math.random() - 0.5) * 1.0;
+                const dist = 35 + Math.random() * 65;
+                const dx = Math.cos(ang) * dist;
+                const dy = Math.sin(ang) * dist - 28;
+                const rot = (Math.random() - 0.5) * 500;
+                const sz = (9 + Math.random() * 11) + 'px';
+                const dur = (0.45 + Math.random() * 0.4) + 's';
+                p.style.cssText = `left:${x}px;top:${y}px;`;
+                p.style.setProperty('--dx', dx + 'px');
+                p.style.setProperty('--dy', dy + 'px');
+                p.style.setProperty('--rot', rot + 'deg');
+                p.style.setProperty('--sz', sz);
+                p.style.setProperty('--dur', dur);
+                p.style.animationDelay = (Math.random() * 0.06) + 's';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 800);
+            }
+        }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+    </script>
+
+</body>
+</html>

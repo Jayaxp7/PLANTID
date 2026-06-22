@@ -714,6 +714,68 @@
         }
 
         /* ── TOAST DE ERRO ── */
+        /* ─── MODAL DE CÂMERA AO VIVO ─── */
+        #camera-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9998;
+            flex-direction: column;
+        }
+        #camera-modal.cam-show { display: flex; }
+        .camera-stage {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .camera-loading {
+            position: absolute;
+            color: #fff;
+            font-size: 1rem;
+            opacity: 0.85;
+        }
+        .camera-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+            background: #000;
+        }
+        .cam-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .cam-btn:active { transform: scale(0.92); }
+        .cam-btn-secondary {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 1.3rem;
+        }
+        .cam-btn-shutter {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+        }
+        .cam-btn-shutter:active { background: #e0e0e0; }
+
         #plantid-toast {
             position: fixed;
             bottom: 32px;
@@ -2031,9 +2093,7 @@
     document.getElementById('fileInput').onchange = handleImageInput;
 
     function abrirCamera() {
-        const inp = document.getElementById('fileInput');
-        inp.setAttribute('capture', 'environment');
-        inp.click();
+        iniciarCameraAoVivo();
     }
 
     function abrirGaleria() {
@@ -2042,32 +2102,107 @@
         inp.click();
     }
 
+    /* ─── CÂMERA AO VIVO (getUserMedia) ─── */
+    let _cameraStream = null;
+    let _cameraFacing = 'environment';
+
+    async function iniciarCameraAoVivo() {
+        const modal = document.getElementById('camera-modal');
+        const video = document.getElementById('camera-video');
+        const loading = document.getElementById('camera-loading');
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            // Navegador sem suporte — cai pro input file com capture
+            const inp = document.getElementById('fileInput');
+            inp.setAttribute('capture', 'environment');
+            inp.click();
+            return;
+        }
+
+        modal.classList.add('cam-show');
+        loading.style.display = 'block';
+        video.style.opacity = '0';
+
+        try {
+            _cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: _cameraFacing } },
+                audio: false
+            });
+            video.srcObject = _cameraStream;
+            await video.play();
+            loading.style.display = 'none';
+            video.style.opacity = '1';
+        } catch (err) {
+            console.warn('getUserMedia falhou:', err.message);
+            fecharCamera();
+            showToast('warn', '📷', 'Câmera indisponível', 'Não foi possível acessar a câmera. Verifique as permissões ou use a galeria.', { duracao: 5000 });
+        }
+    }
+
+    function pararCameraStream() {
+        if (_cameraStream) {
+            _cameraStream.getTracks().forEach(t => t.stop());
+            _cameraStream = null;
+        }
+    }
+
+    function fecharCamera() {
+        pararCameraStream();
+        document.getElementById('camera-modal').classList.remove('cam-show');
+    }
+
+    function capturarFoto() {
+        const video = document.getElementById('camera-video');
+        if (!video.videoWidth) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        fecharCamera();
+        processarImagem(dataUrl);
+    }
+
+    async function trocarCamera() {
+        _cameraFacing = _cameraFacing === 'environment' ? 'user' : 'environment';
+        pararCameraStream();
+        await iniciarCameraAoVivo();
+    }
+
+    // Liga os botões do modal de câmera
+    document.getElementById('cam-shutter').onclick = capturarFoto;
+    document.getElementById('cam-close').onclick = fecharCamera;
+    document.getElementById('cam-flip').onclick = trocarCamera;
+
+    /* ─── PROCESSA IMAGEM (compressão + preview) — usado por galeria e câmera ─── */
+    function processarImagem(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            let width = img.width, height = img.height;
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            const preview = document.getElementById('preview');
+            preview.src = currentImgBase64;
+            preview.style.display = 'block';
+            document.querySelector('.upload-box .upload-icon').style.display = 'none';
+            document.querySelector('.upload-box .upload-title').style.display = 'none';
+            document.querySelector('.upload-box .upload-sub').style.display = 'none';
+            document.getElementById('runBtn').disabled = false;
+            const btnsRow = document.getElementById('upload-btns-row');
+            if (btnsRow) btnsRow.style.display = 'none';
+        };
+        img.src = dataUrl;
+    }
+
     function handleImageInput(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                let width = img.width, height = img.height;
-                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                canvas.width = width; canvas.height = height;
-                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                const preview = document.getElementById('preview');
-                preview.src = currentImgBase64;
-                preview.style.display = 'block';
-                document.querySelector('.upload-box .upload-icon').style.display = 'none';
-                document.querySelector('.upload-box .upload-title').style.display = 'none';
-                document.querySelector('.upload-box .upload-sub').style.display = 'none';
-                document.getElementById('runBtn').disabled = false;
-                const btnsRow = document.getElementById('upload-btns-row');
-                if (btnsRow) btnsRow.style.display = 'none';
-            };
-            img.src = event.target.result;
-        };
+        reader.onload = (event) => processarImagem(event.target.result);
         reader.readAsDataURL(file);
     };
 
@@ -3833,6 +3968,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                     <button class="btn-sugerir-enviar" id="btn-enviar-sugestao" onclick="enviarSugestaoTermo()">Enviar sugestão</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CÂMERA AO VIVO -->
+    <div id="camera-modal">
+        <div class="camera-stage">
+            <video id="camera-video" autoplay playsinline></video>
+            <div class="camera-loading" id="camera-loading">Iniciando câmera...</div>
+        </div>
+        <div class="camera-controls">
+            <button class="cam-btn cam-btn-secondary" id="cam-close" title="Fechar">✕</button>
+            <button class="cam-btn cam-btn-shutter" id="cam-shutter" title="Capturar"></button>
+            <button class="cam-btn cam-btn-secondary" id="cam-flip" title="Virar câmera">🔄</button>
         </div>
     </div>
 

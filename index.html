@@ -4004,9 +4004,21 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             <div class="camera-loading" id="camera-loading">Iniciando câmera...</div>
         </div>
         <div class="camera-controls">
-            <button class="cam-btn cam-btn-secondary" id="cam-close" onclick="fecharCamera()" title="Fechar">✕</button>
+            <button class="cam-btn cam-btn-secondary" id="cam-close" onclick="fecharCamera()" title="Fechar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
             <button class="cam-btn cam-btn-shutter" id="cam-shutter" onclick="capturarFoto()" title="Capturar"></button>
-            <button class="cam-btn cam-btn-secondary" id="cam-flip" onclick="trocarCamera()" title="Virar câmera">🔄</button>
+            <button class="cam-btn cam-btn-secondary" id="cam-flip" onclick="trocarCamera()" title="Virar câmera">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 7h-9"/>
+                    <path d="M14 17H5"/>
+                    <circle cx="17" cy="17" r="3"/>
+                    <circle cx="7" cy="7" r="3"/>
+                </svg>
+            </button>
         </div>
     </div>
 

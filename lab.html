@@ -195,10 +195,10 @@
             object-fit: cover; display: block;
         }
         .result-img-placeholder {
-            width: 100%; height: 200px;
-            background: rgba(27,94,32,.2);
+            width: 100%; height: 160px;
+            background: rgba(27,94,32,.15);
             display: flex; align-items: center; justify-content: center;
-            color: rgba(102,187,106,.3); font-size: 4rem;
+            color: rgba(102,187,106,.3);
         }
 
         .result-header {
@@ -247,7 +247,7 @@
             color: #c8e6c9; letter-spacing: .3px;
         }
 
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
         .info-grid.single { grid-template-columns: 1fr; }
 
         .info-box {
@@ -294,14 +294,23 @@
             nav { padding: 0 14px; }
             .nav-logo-text { display: none; }
             .nav-logo-sub { display: none; }
-            .hero-title { font-size: 2.6rem; }
-            .container { padding: 32px 16px 60px; }
+            .hero-title { font-size: 2.2rem; }
+            .container { padding: 20px 14px 60px; }
+            .search-card { padding: 20px 16px; }
             .search-row { flex-direction: column; }
             .search-btn { justify-content: center; }
-            .result-header { padding: 20px 20px 16px; }
-            .result-body { padding: 16px 20px 24px; }
-            .result-name { font-size: 2rem; }
-            .info-grid { grid-template-columns: 1fr; }
+            .result-header { padding: 16px 16px 12px; }
+            .result-body { padding: 14px 16px 20px; }
+            .result-name { font-size: 1.5rem; }
+            .result-sci { font-size: .82rem; }
+            .info-grid { grid-template-columns: 1fr !important; }
+            .info-section { margin-bottom: 16px; }
+            .info-section-title { font-size: 1rem; }
+            .result-img { height: 180px; }
+            .result-img-placeholder { height: 100px; }
+            .result-img-placeholder i { width: 2rem !important; height: 2rem !important; }
+            .hero-sub { font-size: .8rem; }
+            .hero-eyebrow { font-size: .6rem; letter-spacing: 3px; }
         }
     </style>
 </head>

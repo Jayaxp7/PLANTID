@@ -439,6 +439,9 @@
         }
         .toggle-wrap input:checked + .toggle-slider { background: var(--primary); }
         .toggle-wrap input:checked + .toggle-slider:before { transform: translateX(20px); }
+        .config-feedback-btn { display:block; width:100%; text-align:center; padding:9px 0; background:linear-gradient(135deg,#2e7d32,#43a047); color:#fff !important; text-decoration:none; border-radius:10px; font-size:0.82rem; font-weight:700; letter-spacing:0.3px; transition:opacity .2s; }
+        .config-feedback-btn:hover { opacity:0.88; }
+        body.dark-mode .config-feedback-btn { background:linear-gradient(135deg,#1b5e20,#2e7d32); }
 
         /* ── NAV ── */
         nav {
@@ -627,6 +630,37 @@
             text-transform: uppercase;
         }
 
+        .upload-btns-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .upload-btn-opt {
+            flex: 1;
+            padding: 11px 0;
+            border: 1.5px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            letter-spacing: 0.3px;
+        }
+        .upload-btn-opt:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        body.dark-mode .upload-btn-opt {
+            border-color: #81c784;
+            color: #81c784;
+        }
+        body.dark-mode .upload-btn-opt:hover {
+            background: #2e7d32;
+            color: #fff;
+        }
+
         #preview {
             width: 100%;
             border-radius: 14px;
@@ -680,6 +714,69 @@
         }
 
         /* ── TOAST DE ERRO ── */
+        /* ─── MODAL DE CÂMERA AO VIVO ─── */
+        #camera-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9998;
+            flex-direction: column;
+        }
+        #camera-modal.cam-show { display: flex; }
+        .camera-stage {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        .camera-loading {
+            position: absolute;
+            color: #fff;
+            font-size: 1rem;
+            opacity: 0.85;
+        }
+        .camera-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+            background: #000;
+        }
+        .cam-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease;
+        }
+        .cam-btn:active { transform: scale(0.92); }
+        .cam-btn-secondary {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 1.3rem;
+        }
+        .cam-btn-shutter {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 5px rgba(255,255,255,0.3);
+        }
+        .cam-btn-shutter:active { background: #e0e0e0; }
+
         #plantid-toast {
             position: fixed;
             bottom: 32px;
@@ -1849,12 +1946,16 @@
         </div>
 
         <div class="card">
-            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-box" id="upload-box-main" onclick="abrirGaleria()">
                 <span class="upload-icon">📸</span>
-                <div class="upload-title">Fotografar ou enviar amostra</div>
+                <div class="upload-title">Enviar da galeria ou câmera</div>
                 <div class="upload-sub">JPG, PNG, HEIC — qualquer resolução</div>
                 <input type="file" id="fileInput" accept="image/*" hidden>
                 <img id="preview">
+            </div>
+            <div class="upload-btns-row" id="upload-btns-row">
+                <button class="upload-btn-opt" onclick="abrirCamera()">📷 Usar câmera</button>
+                <button class="upload-btn-opt" onclick="abrirGaleria()">🖼️ Galeria</button>
             </div>
             <button class="btn-scan" id="runBtn" disabled>⬡ Iniciar Análise Botânica</button>
             <div id="status-ia"></div>
@@ -1990,30 +2091,112 @@
     }
 
     /* ─── COMPRESSÃO DE IMAGEM ─── */
-    document.getElementById('fileInput').onchange = (e) => {
+    document.getElementById('fileInput').onchange = handleImageInput;
+
+    function abrirCamera() {
+        iniciarCameraAoVivo();
+    }
+
+    function abrirGaleria() {
+        const inp = document.getElementById('fileInput');
+        inp.removeAttribute('capture');
+        inp.click();
+    }
+
+    /* ─── CÂMERA AO VIVO (getUserMedia) ─── */
+    let _cameraStream = null;
+    let _cameraFacing = 'environment';
+
+    async function iniciarCameraAoVivo() {
+        const modal = document.getElementById('camera-modal');
+        const video = document.getElementById('camera-video');
+        const loading = document.getElementById('camera-loading');
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const inp = document.getElementById('fileInput');
+            inp.setAttribute('capture', 'environment');
+            inp.click();
+            return;
+        }
+
+        modal.classList.add('cam-show');
+        loading.style.display = 'block';
+        video.style.opacity = '0';
+
+        try {
+            _cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: _cameraFacing } },
+                audio: false
+            });
+            video.srcObject = _cameraStream;
+            await video.play();
+            loading.style.display = 'none';
+            video.style.opacity = '1';
+        } catch (err) {
+            console.warn('getUserMedia falhou:', err.message);
+            fecharCamera();
+            showToast('warn', '📷', 'Câmera indisponível', 'Não foi possível acessar a câmera. Verifique as permissões ou use a galeria.', { duracao: 5000 });
+        }
+    }
+
+    function pararCameraStream() {
+        if (_cameraStream) {
+            _cameraStream.getTracks().forEach(t => t.stop());
+            _cameraStream = null;
+        }
+    }
+
+    function fecharCamera() {
+        pararCameraStream();
+        document.getElementById('camera-modal').classList.remove('cam-show');
+    }
+
+    function capturarFoto() {
+        const video = document.getElementById('camera-video');
+        if (!video.videoWidth) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        fecharCamera();
+        processarImagem(canvas.toDataURL('image/jpeg', 0.9));
+    }
+
+    async function trocarCamera() {
+        _cameraFacing = _cameraFacing === 'environment' ? 'user' : 'environment';
+        pararCameraStream();
+        await iniciarCameraAoVivo();
+    }
+
+    /* ─── PROCESSA IMAGEM (compressão + preview) ─── */
+    function processarImagem(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            let width = img.width, height = img.height;
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            const preview = document.getElementById('preview');
+            preview.src = currentImgBase64;
+            preview.style.display = 'block';
+            document.querySelector('.upload-box .upload-icon').style.display = 'none';
+            document.querySelector('.upload-box .upload-title').style.display = 'none';
+            document.querySelector('.upload-box .upload-sub').style.display = 'none';
+            document.getElementById('runBtn').disabled = false;
+            const btnsRow = document.getElementById('upload-btns-row');
+            if (btnsRow) btnsRow.style.display = 'none';
+        };
+        img.src = dataUrl;
+    }
+
+    function handleImageInput(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                let width = img.width, height = img.height;
-                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                canvas.width = width; canvas.height = height;
-                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                const preview = document.getElementById('preview');
-                preview.src = currentImgBase64;
-                preview.style.display = 'block';
-                document.querySelector('.upload-box .upload-icon').style.display = 'none';
-                document.querySelector('.upload-box .upload-title').style.display = 'none';
-                document.querySelector('.upload-box .upload-sub').style.display = 'none';
-                document.getElementById('runBtn').disabled = false;
-            };
-            img.src = event.target.result;
-        };
+        reader.onload = (event) => processarImagem(event.target.result);
         reader.readAsDataURL(file);
     };
 
@@ -2139,6 +2322,74 @@
                 return;
             }
 
+            // Verifica cache global de espécies no Firestore
+            status.innerText = "🔍 Verificando banco global de espécies...";
+            try {
+                const especieKey = binomialKey.replace(/ /g, '_');
+                const especieDoc = await window._fbDB.collection('especies').doc(especieKey).get();
+                if (especieDoc.exists) {
+                    const especieData = especieDoc.data();
+                    // Remove campos internos do Firestore antes de salvar localmente
+                    const { _savedAt, ...plantFirestore } = especieData;
+                    plantFirestore.img = currentImgBase64;
+                    plantFirestore.timestamp = Date.now();
+
+                    // Salva no herbário local para próximas consultas offline
+                    const cacheTx = db.transaction("plants", "readwrite");
+                    const cacheReq = cacheTx.objectStore("plants").add(plantFirestore);
+                    cacheTx.oncomplete = () => {
+                        plantFirestore.id = cacheReq.result;
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        window._currentFeedbackImg = plantFirestore.img || null;
+                        renderFeedback(plantFirestore.nome_cientifico, plantFirestore.img, fbDocId);
+                        btn.disabled = false;
+                    };
+                    cacheTx.onerror = () => {
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        btn.disabled = false;
+                    };
+                    status.innerText = "⚡ Ficha carregada do banco global!";
+                    return;
+                }
+            } catch(e) {
+                console.warn('Cache global Firestore:', e.message);
+                // Falha silenciosa — continua para o Gemini normalmente
+            }
+
+            // Verifica cache global de espécies no Firestore
+            status.innerText = "🔍 Verificando banco global de espécies...";
+            try {
+                await loadFirebase();
+                const especieKey = binomialKey.replace(/ /g, '_');
+                const especieDoc = await window._fbDB.collection('especies').doc(especieKey).get();
+                if (especieDoc.exists) {
+                    const { _savedAt, ...plantFirestore } = especieDoc.data();
+                    plantFirestore.img = currentImgBase64;
+                    plantFirestore.timestamp = Date.now();
+                    const cacheTx = db.transaction("plants", "readwrite");
+                    const cacheReq = cacheTx.objectStore("plants").add(plantFirestore);
+                    cacheTx.oncomplete = () => {
+                        plantFirestore.id = cacheReq.result;
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        window._currentFeedbackImg = plantFirestore.img || null;
+                        renderFeedback(plantFirestore.nome_cientifico, plantFirestore.img, fbDocId);
+                        btn.disabled = false;
+                    };
+                    cacheTx.onerror = () => {
+                        status.innerText = "";
+                        openModal(plantFirestore);
+                        btn.disabled = false;
+                    };
+                    status.innerText = "⚡ Ficha carregada do banco global!";
+                    return;
+                }
+            } catch(e) {
+                console.warn('Cache global Firestore:', e.message);
+            }
+
             status.innerText = "✨ Nova espécie! Gerando relatório botânico...";
 
             // Etapa 2: relatório completo com nome já confirmado
@@ -2222,7 +2473,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
             const addTx = db.transaction("plants", "readwrite");
             const addReq = addTx.objectStore("plants").add(plant);
 
-            addTx.oncomplete = () => {
+            addTx.oncomplete = async () => {
                 // Recupera o id gerado e abre o modal
                 plant.id = addReq.result;
                 status.innerText = "";
@@ -2230,6 +2481,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 window._currentFeedbackImg = plant.img || null;
                 renderFeedback(plant.nome_cientifico, plant.img, fbDocId);
                 sincronizarPlantaIndividual(plant);
+
+                // Salva ficha no banco global de espécies (sem a foto — muito pesada)
+                try {
+                    const especieKey = binomialKey.replace(/ /g, '_');
+                    const { img, id, timestamp, ...plantSemFoto } = plant;
+                    await window._fbDB.collection('especies').doc(especieKey).set({
+                        ...plantSemFoto,
+                        _savedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch(e) {
+                    console.warn('Salvar espécie global:', e.message);
+                    // Falha silenciosa — não prejudica o usuário
+                }
             };
 
             addTx.onerror = () => {
@@ -2544,7 +2808,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
     function destacarTermosGlossario() {
         if (!window.GLOSSARIO || !window.GLOSSARIO.length) return;
         // Monta regex com todos os termos — palavra exata, case-insensitive
-        const termos = window.window.GLOSSARIO.map(g => g.termo);
+        const termos = window.GLOSSARIO.map(g => g.termo);
         const regex = new RegExp(
             '\\b(' + termos.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
             'gi'
@@ -3675,6 +3939,10 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <span class="toggle-slider"></span>
             </label>
         </div>
+        <div style="padding:8px 4px 4px;">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSed1DZXOI-4JeWd1G5oLX0t-cknwNsi1L4WzAaK7FCRfwveVw/viewform?usp=header" target="_blank" rel="noopener" class="config-feedback-btn">💬 Avaliar o app</a>
+            <div style="font-size:0.68rem;color:#888;text-align:center;padding:5px 4px 2px;line-height:1.4;">Sua opinião nos ajuda a melhorar o PlantID 🌿</div>
+        </div>
     </div>
 
     <!-- CURSOR: elemento visual seguindo o mouse -->
@@ -3726,6 +3994,19 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                     <button class="btn-sugerir-enviar" id="btn-enviar-sugestao" onclick="enviarSugestaoTermo()">Enviar sugestão</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CÂMERA AO VIVO -->
+    <div id="camera-modal">
+        <div class="camera-stage">
+            <video id="camera-video" autoplay playsinline></video>
+            <div class="camera-loading" id="camera-loading">Iniciando câmera...</div>
+        </div>
+        <div class="camera-controls">
+            <button class="cam-btn cam-btn-secondary" id="cam-close" onclick="fecharCamera()" title="Fechar">✕</button>
+            <button class="cam-btn cam-btn-shutter" id="cam-shutter" onclick="capturarFoto()" title="Capturar"></button>
+            <button class="cam-btn cam-btn-secondary" id="cam-flip" onclick="trocarCamera()" title="Virar câmera">🔄</button>
         </div>
     </div>
 

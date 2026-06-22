@@ -770,12 +770,14 @@
             transition:all .2s;
         }
         .glossario-item:hover { background:rgba(27,94,32,.3); border-color:rgba(76,175,80,.25); }
-        .glossario-item-termo { font-weight:600; color:#c8e6c9; font-size:.95rem; }
+        .glossario-item-termo { font-weight:600; color:#c8e6c9; font-size:.95rem; flex:1; }
         .glossario-item-cat {
-            font-size:.62rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
-            color:rgba(102,187,106,.55); margin-top:2px; display:block;
+            font-size:.6rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+            color:rgba(102,187,106,.6); background:rgba(76,175,80,.1);
+            border:1px solid rgba(76,175,80,.2); border-radius:5px;
+            padding:2px 7px; white-space:nowrap; flex-shrink:0;
         }
-        .glossario-item-def { font-size:.84rem; color:rgba(200,230,201,.6); margin-top:6px; line-height:1.5; }
+        .glossario-item-def { font-size:.84rem; color:rgba(200,230,201,.6); margin-top:8px; line-height:1.5; }
         .glossario-noresult { display:none; text-align:center; padding:40px; color:rgba(165,214,167,.4); }
 
         .sugerir-btn-wrap { margin-bottom:16px; }
@@ -1028,12 +1030,12 @@
             .hero-title { font-size:3.2rem; }
             .container { padding:28px 16px 70px; }
             nav { padding:0 12px; gap:4px; }
-            .nav-logo-icon { width:28px; height:28px; }
-            .nav-logo-text { font-size:1.2rem; }
+            .nav-logo-icon { width:32px; height:32px; }
+            .nav-logo-text { display:none; }
             .nav-logo-sub { display:none; }
-            .nav-logo { gap:7px; }
+            .nav-logo { gap:0; }
             .nav-tabs { gap:2px; }
-            nav button { padding:6px 8px; font-size:.68rem; letter-spacing:.5px; }
+            nav button { padding:6px 10px; font-size:.68rem; letter-spacing:.5px; }
             .modal-body { padding:20px 18px 24px; }
             .info-grid { grid-template-columns:1fr; }
             .modal-plant-name { font-size:2rem; }
@@ -2942,9 +2944,9 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 <div class="glossario-grupo-letra">${letra}</div>
                 ${grupos[letra].map(g => `
                     <div class="glossario-item" onclick="toggleGlossarioItem(this)">
-                        <div class="glossario-item-termo">
-                            ${g.termo}
-                            <span class="glossario-item-categoria">${g.cat}</span>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <span class="glossario-item-termo">${g.termo}</span>
+                            <span class="glossario-item-cat">${g.cat}</span>
                         </div>
                         <div class="glossario-item-def">${g.def}</div>
                     </div>

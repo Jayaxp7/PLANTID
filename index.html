@@ -840,17 +840,19 @@
         .glossario-search:focus { border-color:rgba(76,175,80,.5); }
         .glossario-search::placeholder { color:rgba(165,214,167,.35); }
 
-        .glossario-letras { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
+        .glossario-letras { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:20px; }
         .glossario-letra-btn {
-            width:34px; height:34px; border-radius:8px;
+            min-width:34px; height:34px; padding:0 8px;
+            border-radius:8px;
             background: rgba(255,255,255,0.08);
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
             border:1px solid rgba(255,255,255,0.2);
             color: #a5d6a7;
-            font-size:.8rem; font-weight:700;
+            font-size:.78rem; font-weight:700;
             cursor:pointer; transition:all .2s;
             display:flex; align-items:center; justify-content:center;
+            white-space:nowrap;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 2px 8px rgba(0,0,0,0.2);
         }
         .glossario-letra-btn:hover {

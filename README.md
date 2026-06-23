@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/29257953/README.md)
+[README (1).md](https://github.com/user-attachments/files/29258104/README.1.md)
 <div align="center">
 
 <img src="icon.png" width="100" height="100" alt="PlantID Logo" />
@@ -66,10 +66,22 @@ Enciclopédia botânica colaborativa. Consulte fichas técnicas completas digita
 <div align="center">
 <table>
 <tr>
-<td align="center"><img src="https://raw.githubusercontent.com/Jayaxp7/PLANTID/main/screenshots/glossario.jpg" width="200" alt="Glossário" /><br/><sub>Glossário Botânico</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/Jayaxp7/PLANTID/main/screenshots/herbario.jpg" width="200" alt="Herbário" /><br/><sub>Herbário Digital</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/Jayaxp7/PLANTID/main/screenshots/ficha.jpg" width="200" alt="Ficha" /><br/><sub>Ficha Técnica</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/Jayaxp7/PLANTID/main/screenshots/ficha2.jpg" width="200" alt="Ficha 2" /><br/><sub>Dados Completos</sub></td>
+<td align="center">
+<img src="Screenshot_2026-06-23-12-45-21-679_com.android.chrome.jpg" width="200" alt="Glossário" />
+<br/><sub>Glossário Botânico</sub>
+</td>
+<td align="center">
+<img src="Screenshot_2026-06-23-12-45-25-126_com.android.chrome.jpg" width="200" alt="Herbário" />
+<br/><sub>Herbário Digital</sub>
+</td>
+<td align="center">
+<img src="Screenshot_2026-06-23-12-45-27-934_com.android.chrome.jpg" width="200" alt="Ficha" />
+<br/><sub>Ficha Técnica</sub>
+</td>
+<td align="center">
+<img src="Screenshot_2026-06-23-12-45-32-310_com.android.chrome.jpg" width="200" alt="Dados" />
+<br/><sub>Dados Completos</sub>
+</td>
 </tr>
 </table>
 </div>

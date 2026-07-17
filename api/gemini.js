@@ -1,4 +1,4 @@
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -40,92 +40,65 @@ module.exports = async function handler(req, res) {
 
         const data = await response.json();
 
-        // Salvar usageMetadata via Firestore REST API (sem firebase-admin)
-        if (response.ok && data.usageMetadata) {
-            try {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-                const projectId = serviceAccount.project_id;
-                const usage = data.usageMetadata;
-
-                const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/uso_tokens`;
-
-                // Gerar token OAuth2 com JWT
-                const now = Math.floor(Date.now() / 1000);
-                const header = { alg: 'RS256', typ: 'JWT' };
-                const payload = {
-                    iss: serviceAccount.client_email,
-                    scope: 'https://www.googleapis.com/auth/datastore',
-                    aud: 'https://oauth2.googleapis.com/token',
-                    iat: now,
-                    exp: now + 3600,
-                };
-
-                const encode = obj => btoa(JSON.stringify(obj))
-                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-                const signingInput = `${encode(header)}.${encode(payload)}`;
-
-                // Importar crypto para assinar com RS256
-                const privateKey = serviceAccount.private_key;
-                const keyData = privateKey
-                    .replace('-----BEGIN PRIVATE KEY-----', '')
-                    .replace('-----END PRIVATE KEY-----', '')
-                    .replace(/\n/g, '');
-
-                const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
-                const cryptoKey = await crypto.subtle.importKey(
-                    'pkcs8', binaryKey,
-                    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-                    false, ['sign']
-                );
-
-                const encoder = new TextEncoder();
-                const signature = await crypto.subtle.sign(
-                    'RSASSA-PKCS1-v1_5',
-                    cryptoKey,
-                    encoder.encode(signingInput)
-                );
-
-                const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
-                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-                const jwt = `${signingInput}.${sigB64}`;
-
-                // Trocar JWT por access token
-                const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-                });
-                const tokenData = await tokenResp.json();
-                const accessToken = tokenData.access_token;
-
-                // Salvar no Firestore
-                await fetch(firestoreUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        fields: {
-                            promptTokens:    { integerValue: usage.promptTokenCount     ?? 0 },
-                            candidateTokens: { integerValue: usage.candidatesTokenCount ?? 0 },
-                            totalTokens:     { integerValue: usage.totalTokenCount      ?? 0 },
-                            modelo:          { stringValue: modelName },
-                            timestamp:       { timestampValue: new Date().toISOString() },
-                        }
-                    })
-                });
-
-            } catch (fbErr) {
-                // Falha silenciosa — não bloqueia a resposta ao usuário
-                console.error('Firestore usage log error:', fbErr.message);
-            }
+        // Log de tokens — falha silenciosa, não bloqueia resposta
+        if (response.ok && data.usageMetadata && process.env.FIREBASE_SERVICE_ACCOUNT) {
+            logTokens(data.usageMetadata, modelName).catch(() => {});
         }
 
         return res.status(response.status).json(data);
     } catch (e) {
         return res.status(500).json({ error: e.message });
     }
+}
+
+async function logTokens(usage, modelName) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    const projectId = serviceAccount.project_id;
+
+    // Gerar JWT para autenticação
+    const now = Math.floor(Date.now() / 1000);
+    const headerB64 = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const payloadB64 = Buffer.from(JSON.stringify({
+        iss: serviceAccount.client_email,
+        scope: 'https://www.googleapis.com/auth/datastore',
+        aud: 'https://oauth2.googleapis.com/token',
+        iat: now,
+        exp: now + 3600,
+    })).toString('base64url');
+
+    const signingInput = `${headerB64}.${payloadB64}`;
+
+    const { createSign } = await import('crypto');
+    const sign = createSign('RSA-SHA256');
+    sign.update(signingInput);
+    const signature = sign.sign(serviceAccount.private_key, 'base64')
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const jwt = `${signingInput}.${signature}`;
+
+    // Trocar JWT por access token
+    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+    });
+    const { access_token } = await tokenResp.json();
+
+    // Salvar no Firestore via REST
+    await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/uso_tokens`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({
+            fields: {
+                promptTokens:    { integerValue: usage.promptTokenCount     ?? 0 },
+                candidateTokens: { integerValue: usage.candidatesTokenCount ?? 0 },
+                totalTokens:     { integerValue: usage.totalTokenCount      ?? 0 },
+                modelo:          { stringValue: modelName },
+                timestamp:       { timestampValue: new Date().toISOString() },
+            }
+        })
+    });
 }

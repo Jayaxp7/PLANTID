@@ -39,66 +39,8 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-
-        // Log de tokens — falha silenciosa, não bloqueia resposta
-        if (response.ok && data.usageMetadata && process.env.FIREBASE_SERVICE_ACCOUNT) {
-            logTokens(data.usageMetadata, modelName).catch(() => {});
-        }
-
         return res.status(response.status).json(data);
     } catch (e) {
         return res.status(500).json({ error: e.message });
     }
-}
-
-async function logTokens(usage, modelName) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    const projectId = serviceAccount.project_id;
-
-    // Gerar JWT para autenticação
-    const now = Math.floor(Date.now() / 1000);
-    const headerB64 = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-    const payloadB64 = Buffer.from(JSON.stringify({
-        iss: serviceAccount.client_email,
-        scope: 'https://www.googleapis.com/auth/datastore',
-        aud: 'https://oauth2.googleapis.com/token',
-        iat: now,
-        exp: now + 3600,
-    })).toString('base64url');
-
-    const signingInput = `${headerB64}.${payloadB64}`;
-
-    const { createSign } = await import('crypto');
-    const sign = createSign('RSA-SHA256');
-    sign.update(signingInput);
-    const signature = sign.sign(serviceAccount.private_key, 'base64')
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    const jwt = `${signingInput}.${signature}`;
-
-    // Trocar JWT por access token
-    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-    });
-    const { access_token } = await tokenResp.json();
-
-    // Salvar no Firestore via REST
-    await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/uso_tokens`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
-        },
-        body: JSON.stringify({
-            fields: {
-                promptTokens:    { integerValue: usage.promptTokenCount     ?? 0 },
-                candidateTokens: { integerValue: usage.candidatesTokenCount ?? 0 },
-                totalTokens:     { integerValue: usage.totalTokenCount      ?? 0 },
-                modelo:          { stringValue: modelName },
-                timestamp:       { timestampValue: new Date().toISOString() },
-            }
-        })
-    });
 }

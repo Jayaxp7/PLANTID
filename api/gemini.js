@@ -3,7 +3,6 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Proteção de origem — só aceita chamadas do próprio domínio
     const origin = req.headers.origin || '';
     const referer = req.headers.referer || '';
     const allowed = [
@@ -13,8 +12,6 @@ export default async function handler(req, res) {
     ];
 
     const originOk = allowed.some(a => origin.startsWith(a) || referer.startsWith(a));
-
-    // Em desenvolvimento local (sem origin) também permite
     const isLocal = !origin && !referer;
 
     if (!originOk && !isLocal) {
@@ -43,26 +40,84 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        // Salvar usageMetadata no Firestore para monitoramento de custo
+        // Salvar usageMetadata via Firestore REST API (sem firebase-admin)
         if (response.ok && data.usageMetadata) {
             try {
-                const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-                const { getFirestore, FieldValue } = await import('firebase-admin/firestore');
-
-                if (!getApps().length) {
-                    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-                }
-
-                const db = getFirestore();
+                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+                const projectId = serviceAccount.project_id;
                 const usage = data.usageMetadata;
 
-                await db.collection('uso_tokens').add({
-                    promptTokens:     usage.promptTokenCount     ?? 0,
-                    candidateTokens:  usage.candidatesTokenCount ?? 0,
-                    totalTokens:      usage.totalTokenCount      ?? 0,
-                    modelo:           modelName,
-                    timestamp:        FieldValue.serverTimestamp(),
+                const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/uso_tokens`;
+
+                // Gerar token OAuth2 com JWT
+                const now = Math.floor(Date.now() / 1000);
+                const header = { alg: 'RS256', typ: 'JWT' };
+                const payload = {
+                    iss: serviceAccount.client_email,
+                    scope: 'https://www.googleapis.com/auth/datastore',
+                    aud: 'https://oauth2.googleapis.com/token',
+                    iat: now,
+                    exp: now + 3600,
+                };
+
+                const encode = obj => btoa(JSON.stringify(obj))
+                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                const signingInput = `${encode(header)}.${encode(payload)}`;
+
+                // Importar crypto para assinar com RS256
+                const privateKey = serviceAccount.private_key;
+                const keyData = privateKey
+                    .replace('-----BEGIN PRIVATE KEY-----', '')
+                    .replace('-----END PRIVATE KEY-----', '')
+                    .replace(/\n/g, '');
+
+                const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
+                const cryptoKey = await crypto.subtle.importKey(
+                    'pkcs8', binaryKey,
+                    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+                    false, ['sign']
+                );
+
+                const encoder = new TextEncoder();
+                const signature = await crypto.subtle.sign(
+                    'RSASSA-PKCS1-v1_5',
+                    cryptoKey,
+                    encoder.encode(signingInput)
+                );
+
+                const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                const jwt = `${signingInput}.${sigB64}`;
+
+                // Trocar JWT por access token
+                const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
                 });
+                const tokenData = await tokenResp.json();
+                const accessToken = tokenData.access_token;
+
+                // Salvar no Firestore
+                await fetch(firestoreUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        fields: {
+                            promptTokens:    { integerValue: usage.promptTokenCount     ?? 0 },
+                            candidateTokens: { integerValue: usage.candidatesTokenCount ?? 0 },
+                            totalTokens:     { integerValue: usage.totalTokenCount      ?? 0 },
+                            modelo:          { stringValue: modelName },
+                            timestamp:       { timestampValue: new Date().toISOString() },
+                        }
+                    })
+                });
+
             } catch (fbErr) {
                 // Falha silenciosa — não bloqueia a resposta ao usuário
                 console.error('Firestore usage log error:', fbErr.message);

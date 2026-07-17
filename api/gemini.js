@@ -42,6 +42,33 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
+
+        // Salvar usageMetadata no Firestore para monitoramento de custo
+        if (response.ok && data.usageMetadata) {
+            try {
+                const { initializeApp, getApps, cert } = await import('firebase-admin/app');
+                const { getFirestore, FieldValue } = await import('firebase-admin/firestore');
+
+                if (!getApps().length) {
+                    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+                }
+
+                const db = getFirestore();
+                const usage = data.usageMetadata;
+
+                await db.collection('uso_tokens').add({
+                    promptTokens:     usage.promptTokenCount     ?? 0,
+                    candidateTokens:  usage.candidatesTokenCount ?? 0,
+                    totalTokens:      usage.totalTokenCount      ?? 0,
+                    modelo:           modelName,
+                    timestamp:        FieldValue.serverTimestamp(),
+                });
+            } catch (fbErr) {
+                // Falha silenciosa — não bloqueia a resposta ao usuário
+                console.error('Firestore usage log error:', fbErr.message);
+            }
+        }
+
         return res.status(response.status).json(data);
     } catch (e) {
         return res.status(500).json({ error: e.message });

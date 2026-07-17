@@ -284,6 +284,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div id="mod-lista"></div>
       </div>
 
+      <!-- USO DE TOKENS -->
+      <div class="mod-section">
+        <div class="mod-header">
+          <div class="chart-title">🔢 Uso de Tokens — Gemini</div>
+          <span style="font-size:.8rem;color:#888;" id="tokens-ultima-atualizacao"></span>
+        </div>
+        <div id="tokens-loading" class="mod-empty">⏳ Carregando dados...</div>
+        <div id="tokens-conteudo" style="display:none;">
+          <div class="metrics-grid" style="margin-bottom:20px;">
+            <div class="metric-card" style="border-left-color:#00695c"><div class="metric-label">Total de tokens</div><div class="metric-value" style="color:#00695c" id="tk-total">—</div><div class="metric-sub">acumulado</div></div>
+            <div class="metric-card" style="border-left-color:#0277bd"><div class="metric-label">Tokens entrada</div><div class="metric-value" style="color:#0277bd" id="tk-prompt">—</div><div class="metric-sub">prompts + imagens</div></div>
+            <div class="metric-card" style="border-left-color:#6a1b9a"><div class="metric-label">Tokens saída</div><div class="metric-value" style="color:#6a1b9a" id="tk-candidate">—</div><div class="metric-sub">respostas geradas</div></div>
+            <div class="metric-card" style="border-left-color:#e65100"><div class="metric-label">Chamadas</div><div class="metric-value" style="color:#e65100" id="tk-chamadas">—</div><div class="metric-sub">total de requests</div></div>
+            <div class="metric-card" style="border-left-color:#558b2f"><div class="metric-label">Média por chamada</div><div class="metric-value" style="color:#558b2f" id="tk-media">—</div><div class="metric-sub">tokens médios</div></div>
+          </div>
+          <div class="chart-card" style="margin-bottom:0;">
+            <div class="chart-title" style="font-size:1rem;">📅 Tokens por dia (últimos 30 dias)</div>
+            <div class="chart-wrap"><canvas id="chart-tokens"></canvas></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -415,6 +437,7 @@ function renderizarPainel(dados){
   document.getElementById('loading').style.display='none';
   document.getElementById('conteudo').style.display='block';
   carregarModeracaoGlossario();
+  carregarUsoTokens();
   const total=dados.length;
   const corretas=dados.filter(d=>d.confirmada===true).length;
   const incorretas=dados.filter(d=>d.confirmada===false).length;
@@ -429,6 +452,7 @@ function renderizarPainel(dados){
     <div class="metric-card" style="border-left-color:#f9a825"><div class="metric-label">Taxa Acerto</div><div class="metric-value" style="color:#f9a825">${taxa}%</div><div class="metric-sub">com feedback</div></div>
     <div class="metric-card" style="border-left-color:#1565c0"><div class="metric-label">Estados</div><div class="metric-value" style="color:#1565c0">${nEstados}</div><div class="metric-sub">ativos</div></div>
     <div class="metric-card" style="border-left-color:#6a1b9a"><div class="metric-label">Pendentes</div><div class="metric-value" style="color:#6a1b9a">${pendentes}</div><div class="metric-sub">sem feedback</div></div>
+    <div class="metric-card" style="border-left-color:#00695c" id="card-tokens"><div class="metric-label">Tokens usados</div><div class="metric-value" style="color:#00695c" id="metric-tokens">—</div><div class="metric-sub" id="metric-tokens-sub">carregando...</div></div>
   `;
 
   // Dados por estado
@@ -527,6 +551,98 @@ function iniciarMapa(porEstado){
       `;
     });
   });
+}
+
+// ─── USO DE TOKENS ───────────────────────────────────────────────────────────
+async function carregarUsoTokens() {
+    const loading  = document.getElementById('tokens-loading');
+    const conteudo = document.getElementById('tokens-conteudo');
+    if (!loading) return;
+
+    try {
+        const snap = await firebase.firestore().collection('uso_tokens')
+            .orderBy('timestamp', 'desc')
+            .limit(1000)
+            .get();
+
+        loading.style.display = 'none';
+        conteudo.style.display = 'block';
+
+        if (snap.empty) {
+            loading.style.display = 'block';
+            loading.textContent = 'Nenhum dado de tokens registrado ainda.';
+            return;
+        }
+
+        let totalTokens = 0, promptTokens = 0, candidateTokens = 0;
+        const porDia = {};
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            totalTokens     += d.totalTokens     || 0;
+            promptTokens    += d.promptTokens    || 0;
+            candidateTokens += d.candidateTokens || 0;
+
+            if (d.timestamp?.toDate) {
+                const dia = d.timestamp.toDate().toLocaleDateString('pt-BR');
+                porDia[dia] = (porDia[dia] || 0) + (d.totalTokens || 0);
+            }
+        });
+
+        const chamadas = snap.size;
+        const media    = chamadas > 0 ? Math.round(totalTokens / chamadas) : 0;
+
+        const fmt = n => n >= 1000000
+            ? (n / 1000000).toFixed(2) + 'M'
+            : n >= 1000 ? (n / 1000).toFixed(1) + 'K' : n;
+
+        document.getElementById('tk-total').textContent     = fmt(totalTokens);
+        document.getElementById('tk-prompt').textContent    = fmt(promptTokens);
+        document.getElementById('tk-candidate').textContent = fmt(candidateTokens);
+        document.getElementById('tk-chamadas').textContent  = chamadas;
+        document.getElementById('tk-media').textContent     = fmt(media);
+
+        // Atualiza card no metrics-grid também
+        const metricEl = document.getElementById('metric-tokens');
+        const metricSub = document.getElementById('metric-tokens-sub');
+        if (metricEl) metricEl.textContent = fmt(totalTokens);
+        if (metricSub) metricSub.textContent = chamadas + ' chamadas';
+
+        document.getElementById('tokens-ultima-atualizacao').textContent =
+            'Atualizado agora';
+
+        // Gráfico — últimos 30 dias ordenados
+        const diasOrdenados = Object.entries(porDia)
+            .sort((a, b) => {
+                const [da, ma, ya] = a[0].split('/').map(Number);
+                const [db, mb, yb] = b[0].split('/').map(Number);
+                return new Date(ya, ma-1, da) - new Date(yb, mb-1, db);
+            })
+            .slice(-30);
+
+        new Chart(document.getElementById('chart-tokens'), {
+            type: 'bar',
+            data: {
+                labels: diasOrdenados.map(d => d[0]),
+                datasets: [{
+                    data: diasOrdenados.map(d => d[1]),
+                    backgroundColor: '#00695c',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+                maintainAspectRatio: false
+            }
+        });
+
+    } catch(e) {
+        if (loading) {
+            loading.style.display = 'block';
+            loading.innerHTML = '<span style="color:#c62828">Erro: ' + e.message + '</span>';
+        }
+    }
 }
 
 // ─── MODERAÇÃO DO GLOSSÁRIO ───────────────────────────────────────────────

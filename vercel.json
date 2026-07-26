@@ -1,6 +1,6 @@
 {
-  "routes": [
-    { "src": "/lab", "dest": "/lab.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/lab", "destination": "/lab.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

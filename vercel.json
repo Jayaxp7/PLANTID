@@ -1,7 +1,6 @@
 {
   "routes": [
     { "src": "/lab", "dest": "/lab.html" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

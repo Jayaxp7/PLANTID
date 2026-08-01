@@ -1995,8 +1995,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [
-                        { text: systemPrompt + "\n\n" + userPrompt },
-                        { inline_data: { mime_type: IMG_FORMAT, data: imgBase64Data } }
+                        { text: systemPrompt + "\n\n" + userPrompt }
                     ]}]
                 })
             });

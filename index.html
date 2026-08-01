@@ -3317,49 +3317,22 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         return '<ul class="info-topicos">' + html + '</ul>';
     }
 
-    /* ── PARTÍCULAS DE FOLHAS AO CLICAR ── */
-    (function() {
-        const isMouse = window.matchMedia('(pointer: fine)').matches;
-        const FOLHAS = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTIgMTggQzIgMTggNSA3IDEzIDQgQzE5IDIgMjAgNiAxOCAxMCBDMTYgMTUgOSAxOCAyIDE4WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0yIDE4IEM3IDEzIDEyIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuOCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjMmU3ZDMyIi8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAyNCI+PHBhdGggZD0iTTggMjIgQzggMjIgMiAxNCAyIDggQzIgMyA4IDEgOCAxIEM4IDEgMTQgMyAxNCA4IEMxNCAxNCA4IDIyIDggMjJaIiBmaWxsPSIjNDNhMDQ3Ii8+PHBhdGggZD0iTTggMjIgTDggMSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzJlN2QzMiIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZD0iTTMgMTcgQzMgMTcgMSA5IDcgNSBDMTEgMiAxNyA0IDE3IDEwIEMxNyAxNiAxMCAxOSAzIDE3WiIgZmlsbD0iIzQzYTA0NyIvPjxwYXRoIGQ9Ik0zIDE3IEM4IDEzIDEzIDggMTYgNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+"];
 
-        document.addEventListener('mousedown', e => {
-            criarParticulas(e.clientX, e.clientY);
-        });
+    /* ── PERFIL DE DESEMPENHO DO APARELHO ── */
+    // Escalona animações decorativas conforme a capacidade do dispositivo.
+    // Não afeta nenhuma funcionalidade — só a densidade dos enfeites.
+    const PERF = (() => {
+        const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const nucleos = navigator.hardwareConcurrency || 4;
+        const memoria = navigator.deviceMemory || 4;   // GB; ausente no iOS
+        const touch   = window.matchMedia('(pointer: coarse)').matches;
 
-        // Partículas no touch (celular)
-        document.addEventListener('touchstart', e => {
-            const t = e.touches[0];
-            criarParticulas(t.clientX, t.clientY);
-        }, { passive: true });
-
-        function criarParticulas(x, y) {
-            const qtd = 8 + Math.floor(Math.random() * 6);
-            for (let i = 0; i < qtd; i++) {
-                const p = document.createElement('img');
-                p.className = 'particula-folha';
-                p.src = FOLHAS[Math.floor(Math.random() * FOLHAS.length)];
-
-                const angulo = (Math.PI * 2 / qtd) * i + (Math.random() - 0.5) * 1.0;
-                const dist = 35 + Math.random() * 70;
-                const dx = Math.cos(angulo) * dist;
-                const dy = Math.sin(angulo) * dist - 30;
-                const rot = (Math.random() - 0.5) * 540;
-                const sz = (10 + Math.random() * 12) + 'px';
-                const dur = (0.5 + Math.random() * 0.4) + 's';
-
-                p.style.cssText = `left:${x}px;top:${y}px;`;
-                p.style.setProperty('--dx', dx + 'px');
-                p.style.setProperty('--dy', dy + 'px');
-                p.style.setProperty('--rot', rot + 'deg');
-                p.style.setProperty('--sz', sz);
-                p.style.setProperty('--dur', dur);
-                p.style.animationDelay = (Math.random() * 0.08) + 's';
-
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 900);
-            }
-        }
+        if (reduzir) return { nivel: 'minimo', vagalumes: 0, folhas: 0, particulas: 0 };
+        if (nucleos <= 4 || memoria <= 2) return { nivel: 'baixo',  vagalumes: 6,  folhas: 2, particulas: 5 };
+        if (touch)                        return { nivel: 'medio',  vagalumes: 12, folhas: 4, particulas: 7 };
+        return { nivel: 'alto', vagalumes: 28, folhas: 7, particulas: 12 };
     })();
+    console.log(`PlantID: perfil gráfico → ${PERF.nivel}`);
 
     /* ── FLOATING LEAVES ENGINE ── */
     (function() {
@@ -3472,7 +3445,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         ];
 
         let activeLeaves = [];
-        const MAX_LEAVES = 7;
+        const MAX_LEAVES = PERF.folhas;
 
         function spawnLeaf() {
             if (activeLeaves.length >= MAX_LEAVES) return;
@@ -3525,7 +3498,8 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
         }, { passive: true });
 
         function spawnParticles(x, y) {
-            const qtd = 7 + Math.floor(Math.random() * 5);
+            if (!PERF.particulas) return;
+            const qtd = PERF.particulas + Math.floor(Math.random() * 4);
             for (let i = 0; i < qtd; i++) {
                 const p = document.createElement('img');
                 p.className = 'particula-folha';
@@ -3557,7 +3531,7 @@ conservacao: status na lista vermelha IUCN, ameaças e biomas onde ocorre`;
 
     /* ── VAGALUMES NEON ── */
     (function criarVagalumes() {
-        const qtd = 28;
+        const qtd = PERF.vagalumes;
         for (let i = 0; i < qtd; i++) {
             const v = document.createElement('div');
             v.className = 'vagalume';

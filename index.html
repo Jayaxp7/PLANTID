@@ -1815,7 +1815,8 @@
                     contents: [{ parts: [
                         { text: "Identifique a planta na imagem e retorne SOMENTE o nome científico binomial no formato linnaeano: Gênero (maiúscula) epíteto (minúscula). Apenas duas palavras latinas. Se não for possível identificar, responda exatamente: INDEFINIDO" },
                         { inline_data: { mime_type: IMG_FORMAT, data: imgBase64Data } }
-                    ]}]
+                    ]}],
+                    generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } }
                 })
             });
             const checkData = await check.json();

@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     try {
         const { model, contents, system_instruction, generationConfig } = req.body;
-        const modelName = model || 'gemini-2.5-flash';
+        const modelName = model || 'gemini-3.5-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
         const body = { contents };
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-        return res.status(200).json(data);
+        return res.status(response.status).json(data);
     } catch (e) {
         return res.status(500).json({ error: e.message });
     }

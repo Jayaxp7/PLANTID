@@ -1797,6 +1797,16 @@
         return authority ? `${genus} ${epithet} ${authority}` : `${genus} ${epithet}`;
     }
 
+    /* ─── HASH DA IMAGEM (cache de identificação) ─── */
+    async function hashImagem(base64) {
+        try {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(base64));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {
+            return null; // sem hash → segue o fluxo normal
+        }
+    }
+
     /* ─── ANÁLISE API ─── */
     document.getElementById('runBtn').onclick = async () => {
         const btn = document.getElementById('runBtn');
@@ -1808,30 +1818,56 @@
 
             // Etapa 1: identificar só o binômio (Gênero epíteto) sem inventar autor
             const imgBase64Data = currentImgBase64.split(',')[1];
-            const check = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [
-                        { text: "Identifique a planta na imagem e retorne SOMENTE o nome científico binomial no formato linnaeano: Gênero (maiúscula) epíteto (minúscula). Apenas duas palavras latinas. Se não for possível identificar, responda exatamente: INDEFINIDO" },
-                        { inline_data: { mime_type: IMG_FORMAT, data: imgBase64Data } }
-                    ]}],
-                    generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } }
-                })
-            });
-            const checkData = await check.json();
 
-            if (!checkData.candidates || !checkData.candidates[0]) {
-                const sc1 = check.status;
-                const em1 = checkData.error?.message || JSON.stringify(checkData).slice(0, 200);
-                if (sc1 === 503 || em1.includes('high demand') || em1.includes('RESOURCE_EXHAUSTED')) throw new Error("503");
-                if (sc1 === 403 || em1.includes('PERMISSION_DENIED') || em1.includes('API key')) throw new Error("403");
-                if (sc1 === 404 || em1.includes('not found')) throw new Error("404");
-                if (sc1 === 400 || em1.includes('INVALID_ARGUMENT')) throw new Error("400");
-                throw new Error("Etapa 1 — " + em1);
+            // Cache por hash: mesma foto já identificada não repaga a Etapa 1
+            const imgHash = await hashImagem(imgBase64Data);
+            let rawName = null;
+
+            if (imgHash) {
+                try {
+                    await loadFirebase();
+                    const hDoc = await window._fbDB.collection('cache_imagens').doc(imgHash).get();
+                    if (hDoc.exists && hDoc.data().binomial) {
+                        rawName = hDoc.data().binomial;
+                        console.log('PlantID: identificação vinda do cache de imagem');
+                    }
+                } catch (e) { console.warn('Cache de imagem:', e.message); }
             }
 
-            const rawName = checkData.candidates[0].content.parts[0].text.trim();
+            if (!rawName) {
+                const check = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: "Identifique a planta na imagem e retorne SOMENTE o nome científico binomial no formato linnaeano: Gênero (maiúscula) epíteto (minúscula). Apenas duas palavras latinas. Se não for possível identificar, responda exatamente: INDEFINIDO" },
+                            { inline_data: { mime_type: IMG_FORMAT, data: imgBase64Data } }
+                        ]}],
+                        generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } }
+                    })
+                });
+                const checkData = await check.json();
+
+                if (!checkData.candidates || !checkData.candidates[0]) {
+                    const sc1 = check.status;
+                    const em1 = checkData.error?.message || JSON.stringify(checkData).slice(0, 200);
+                    if (sc1 === 503 || em1.includes('high demand') || em1.includes('RESOURCE_EXHAUSTED')) throw new Error("503");
+                    if (sc1 === 403 || em1.includes('PERMISSION_DENIED') || em1.includes('API key')) throw new Error("403");
+                    if (sc1 === 404 || em1.includes('not found')) throw new Error("404");
+                    if (sc1 === 400 || em1.includes('INVALID_ARGUMENT')) throw new Error("400");
+                    throw new Error("Etapa 1 — " + em1);
+                }
+
+                rawName = checkData.candidates[0].content.parts[0].text.trim();
+
+                // Grava no cache só se a identificação foi bem-sucedida
+                if (imgHash && !rawName.toUpperCase().includes("INDEFINIDO")) {
+                    window._fbDB.collection('cache_imagens').doc(imgHash).set({
+                        binomial: rawName,
+                        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(e => console.warn('Gravar cache de imagem:', e.message));
+                }
+            }
 
             if (rawName.toUpperCase().includes("INDEFINIDO") || rawName.split(' ').length < 2) {
                 btn.disabled = false;

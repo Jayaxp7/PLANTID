@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     try {
         const { model, contents, system_instruction, generationConfig } = req.body;
-        const modelName = model || 'gemini-3.5-flash';
+        const modelName = model || 'gemini-3.6-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
         const body = { contents };
